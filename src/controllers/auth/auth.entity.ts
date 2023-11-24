@@ -3,6 +3,7 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm';
@@ -24,6 +25,12 @@ export class User {
 
   @Column({ type: 'tinyint', nullable: true })
   sex: number;
+
+  @Column({ type: 'tinyint', default: 0, nullable: false })
+  verified: number;
+
+  @OneToMany(() => UserDevices, (device) => device.userId)
+  devices: UserDevices[];
 }
 
 @Entity({ name: 'user_devices' })
@@ -41,10 +48,9 @@ export class UserDevices {
   })
   createAt: Date;
 
-  @Column({ name: 'userId' })
-  userId: number;
+  // @Column({ name: 'userId' })
+  // userId: number;
 
-  @ManyToOne(() => User)
-  @JoinColumn({ name: 'userId' })
-  user: User;
+  @ManyToOne(() => User, (user) => user.devices)
+  userId: User;
 }

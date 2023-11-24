@@ -1,4 +1,4 @@
-import Joi from 'joi';
+import * as Joi from 'joi';
 
 export const userCreateSchema = Joi.object({
   email: Joi.string().email().required(),
@@ -10,4 +10,5 @@ export const userCreateSchema = Joi.object({
     .min(1)
     .max(50)
     .required(),
-}).options({ stripUnknown: true });
+});
+//.options({ stripUnknown: true })
