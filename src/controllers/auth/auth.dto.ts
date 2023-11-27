@@ -1,10 +1,9 @@
-export class LoginAuthDto {
+export abstract class BaseAuthDto {
   email: string;
   password: string;
+  deviceModel?: string;
 }
 
-export class RegisterAuthDto {
-  email: string;
-  password: string;
-  firstName: string;
-}
+export class LoginAuthDto extends BaseAuthDto {}
+
+export class RegisterAuthDto extends BaseAuthDto {}

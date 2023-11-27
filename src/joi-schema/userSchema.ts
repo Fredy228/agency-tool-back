@@ -5,10 +5,6 @@ export const userCreateSchema = Joi.object({
   password: Joi.string()
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,30}$/)
     .required(),
-  firstName: Joi.string()
-    .pattern(/^[A-Za-zА-Яа-я]+$/u)
-    .min(1)
-    .max(50)
-    .required(),
+  deviceModel: Joi.string().min(2).max(100).default(null),
 });
 //.options({ stripUnknown: true })

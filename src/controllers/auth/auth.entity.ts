@@ -1,7 +1,6 @@
 import {
   Column,
   Entity,
-  JoinColumn,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -29,6 +28,9 @@ export class User {
   @Column({ type: 'tinyint', default: 0, nullable: false })
   verified: number;
 
+  @Column({ type: 'tinyint', default: 0, nullable: false })
+  firstSettings: number;
+
   @OneToMany(() => UserDevices, (device) => device.userId)
   devices: UserDevices[];
 }
@@ -48,8 +50,8 @@ export class UserDevices {
   })
   createAt: Date;
 
-  // @Column({ name: 'userId' })
-  // userId: number;
+  @Column({ type: 'varchar', length: 250, nullable: false })
+  token: string;
 
   @ManyToOne(() => User, (user) => user.devices)
   userId: User;
