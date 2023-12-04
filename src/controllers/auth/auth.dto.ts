@@ -6,4 +6,6 @@ export abstract class BaseAuthDto {
 
 export class LoginAuthDto extends BaseAuthDto {}
 
-export class RegisterAuthDto extends BaseAuthDto {}
+export class RegisterAuthDto extends BaseAuthDto {
+  firstName: string;
+}

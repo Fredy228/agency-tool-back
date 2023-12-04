@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
+import { v4 as uuidv4 } from 'uuid';
 
 import { User, UserDevices } from './auth.entity';
 import { LoginAuthDto, RegisterAuthDto } from './auth.dto';
@@ -18,6 +19,7 @@ export class UserService {
     @InjectRepository(UserDevices)
     private devicesRepository: Repository<UserDevices>,
     private jwtService: JwtService,
+    private readonly entityManager: EntityManager,
   ) {}
 
   async signInCredentials({
@@ -56,6 +58,7 @@ export class UserService {
     email,
     password,
     deviceModel,
+    firstName,
   }: RegisterAuthDto): Promise<User & { token: string }> {
     const userFound = await this.usersRepository.findOneBy({ email });
     if (userFound)
@@ -66,12 +69,16 @@ export class UserService {
 
     const hashPass = await hashPassword(password);
 
-    const firstName = `user${Math.floor(Math.random() * 90000) + 10000}`;
+    console.log(firstName);
+
+    const name = firstName
+      ? firstName
+      : `user${Math.floor(Math.random() * 90000) + 10000}`;
 
     const newUser = this.usersRepository.create({
       email,
       password: hashPass,
-      firstName,
+      firstName: name,
     });
     await this.usersRepository.save(newUser);
 
@@ -82,7 +89,64 @@ export class UserService {
     return { ...newUser, token };
   }
 
-  async addDeviceAuth(deviceModel: string, userId: User) {
+  async authGoogle(
+    token: string,
+    deviceModel: string = null,
+  ): Promise<User & { token: string }> {
+    const decodedToken = await this.jwtService.decode(token);
+
+    if (decodedToken.exp > new Date())
+      throw new CustomException(StatusEnum.UNAUTHORIZED, `Not verify(auth)`);
+
+    const currentUser = await this.usersRepository.findOneBy({
+      email: decodedToken.email,
+    });
+
+    if (currentUser) {
+      currentUser.password = null;
+
+      const token = await this.addDeviceAuth(deviceModel, currentUser);
+
+      return { ...currentUser, token };
+    }
+
+    if (!currentUser) {
+      const hashPass = await hashPassword(uuidv4());
+      const newUser = this.usersRepository.create({
+        email: decodedToken.email,
+        password: hashPass,
+        firstName: decodedToken.firstName,
+      });
+
+      await this.usersRepository.save(newUser);
+
+      const token = await this.addDeviceAuth(deviceModel, newUser);
+
+      newUser.password = null;
+
+      return { ...newUser, token };
+    }
+  }
+
+  async refreshToken(user: User, currentDevice: UserDevices): Promise<string> {
+    return this.entityManager.transaction(
+      async (transactionalEntityManager) => {
+        const newToken = this.createToken(user);
+
+        await transactionalEntityManager
+          .getRepository(UserDevices)
+          .createQueryBuilder()
+          .update(UserDevices)
+          .set({ token: newToken })
+          .where('id = :id', { id: currentDevice.id })
+          .execute();
+
+        return newToken;
+      },
+    );
+  }
+
+  async addDeviceAuth(deviceModel: string, userId: User): Promise<string> {
     const token = this.createToken(userId);
     const newDevice = this.devicesRepository.create({
       deviceModel,

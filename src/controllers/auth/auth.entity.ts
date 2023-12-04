@@ -13,17 +13,20 @@ export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ type: 'varchar', length: 100, nullable: false })
   email: string;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ type: 'varchar', length: 100, nullable: false })
   password: string;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ type: 'varchar', length: 100, nullable: false })
   firstName: string;
 
   @Column({ type: 'tinyint', nullable: true })
   sex: number;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  image: string;
 
   @Column({ type: 'tinyint', default: 0, nullable: false })
   verified: number;

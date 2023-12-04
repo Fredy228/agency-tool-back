@@ -2,6 +2,7 @@ import * as Joi from 'joi';
 
 export const userCreateSchema = Joi.object({
   email: Joi.string().email().required(),
+  firstName: Joi.string().default(null),
   password: Joi.string()
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,30}$/)
     .required(),
