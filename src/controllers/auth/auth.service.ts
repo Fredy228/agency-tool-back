@@ -6,8 +6,9 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { User, UserDevices } from './auth.entity';
 import { LoginAuthDto, RegisterAuthDto } from './auth.dto';
-import { CustomException } from '../../services/custom-exception';
 import { StatusEnum } from '../../enum/error/StatusEnum';
+import { TokenType } from '../../types/token-type';
+import { CustomException } from '../../services/custom-exception';
 import { checkPassword, hashPassword } from '../../services/hashPassword';
 
 @Injectable()
@@ -26,7 +27,7 @@ export class UserService {
     email,
     password,
     deviceModel,
-  }: LoginAuthDto): Promise<User & { token: string }> {
+  }: LoginAuthDto): Promise<User & TokenType> {
     const user = await this.usersRepository.findOne({
       where: { email },
       relations: ['devices'],
@@ -49,9 +50,11 @@ export class UserService {
 
     user.password = null;
 
-    const token = await this.addDeviceAuth(deviceModel, user);
+    await this.deleteOldSession(user.devices);
 
-    return { ...user, token };
+    const tokens = await this.addDeviceAuth(deviceModel, user);
+
+    return { ...user, ...tokens };
   }
 
   async signUpCredentials({
@@ -59,7 +62,7 @@ export class UserService {
     password,
     deviceModel,
     firstName,
-  }: RegisterAuthDto): Promise<User & { token: string }> {
+  }: RegisterAuthDto): Promise<User & TokenType> {
     const userFound = await this.usersRepository.findOneBy({ email });
     if (userFound)
       throw new CustomException(
@@ -82,32 +85,37 @@ export class UserService {
     });
     await this.usersRepository.save(newUser);
 
-    const token = await this.addDeviceAuth(deviceModel, newUser);
+    const tokens = await this.addDeviceAuth(deviceModel, newUser);
 
     newUser.password = null;
 
-    return { ...newUser, token };
+    return { ...newUser, ...tokens };
   }
 
   async authGoogle(
     token: string,
     deviceModel: string = null,
-  ): Promise<User & { token: string }> {
+  ): Promise<User & TokenType> {
     const decodedToken = await this.jwtService.decode(token);
 
-    if (decodedToken.exp > new Date())
+    const currExp = decodedToken.exp * 1000;
+    const currTime = new Date().getTime();
+
+    if (currExp < currTime)
       throw new CustomException(StatusEnum.UNAUTHORIZED, `Not verify(auth)`);
 
-    const currentUser = await this.usersRepository.findOneBy({
-      email: decodedToken.email,
+    const currentUser = await this.usersRepository.findOne({
+      where: { email: decodedToken.email },
+      relations: ['devices'],
     });
 
     if (currentUser) {
+      await this.deleteOldSession(currentUser.devices);
+
+      const tokens = await this.addDeviceAuth(deviceModel, currentUser);
+
       currentUser.password = null;
-
-      const token = await this.addDeviceAuth(deviceModel, currentUser);
-
-      return { ...currentUser, token };
+      return { ...currentUser, ...tokens };
     }
 
     if (!currentUser) {
@@ -120,47 +128,81 @@ export class UserService {
 
       await this.usersRepository.save(newUser);
 
-      const token = await this.addDeviceAuth(deviceModel, newUser);
+      const tokens = await this.addDeviceAuth(deviceModel, newUser);
 
       newUser.password = null;
-
-      return { ...newUser, token };
+      return { ...newUser, ...tokens };
     }
   }
 
-  async refreshToken(user: User, currentDevice: UserDevices): Promise<string> {
+  async refreshToken(
+    user: User,
+    currentDevice: UserDevices,
+  ): Promise<TokenType> {
     return this.entityManager.transaction(
       async (transactionalEntityManager) => {
-        const newToken = this.createToken(user);
+        const newTokens = this.createToken(user);
 
         await transactionalEntityManager
           .getRepository(UserDevices)
           .createQueryBuilder()
           .update(UserDevices)
-          .set({ token: newToken })
+          .set({
+            accessToken: newTokens.accessToken,
+            refreshToken: newTokens.refreshToken,
+          })
           .where('id = :id', { id: currentDevice.id })
           .execute();
 
-        return newToken;
+        return newTokens;
       },
     );
   }
 
-  async addDeviceAuth(deviceModel: string, userId: User): Promise<string> {
-    const token = this.createToken(userId);
+  async deleteOldSession(devices: UserDevices[]) {
+    return Promise.all(
+      devices.map(async (device) => {
+        const decodedToken = await this.jwtService.decode(device.refreshToken);
+
+        const currExp = decodedToken.exp * 1000;
+        const currTime = new Date().getTime();
+
+        if (currExp > currTime) return null;
+
+        return this.entityManager.transaction(
+          async (transactionalEntityManager) => {
+            await transactionalEntityManager
+              .getRepository(UserDevices)
+              .createQueryBuilder()
+              .delete()
+              .from(UserDevices)
+              .where('id = :id', { id: device.id })
+              .execute();
+          },
+        );
+      }),
+    );
+  }
+
+  async addDeviceAuth(deviceModel: string, userId: User): Promise<TokenType> {
+    const tokens = this.createToken(userId);
     const newDevice = this.devicesRepository.create({
       deviceModel,
       userId,
-      token,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
     });
 
     await this.devicesRepository.save(newDevice);
 
-    return token;
+    return tokens;
   }
 
-  createToken(user: User): string {
+  createToken(user: User): TokenType {
     const payload = { email: user.firstName, id: user.id };
-    return this.jwtService.sign(payload);
+
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
+    const refreshToken = this.jwtService.sign(payload);
+    return { accessToken, refreshToken };
   }
 }

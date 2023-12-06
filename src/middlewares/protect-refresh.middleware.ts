@@ -37,7 +37,9 @@ export class ProtectRefreshMiddleware implements NestMiddleware {
     if (!currentUser)
       throw new CustomException(StatusEnum.UNAUTHORIZED, 'Not authorized');
 
-    const currentDevice = currentUser.devices.find((i) => i.token === token);
+    const currentDevice = currentUser.devices.find(
+      (i) => i.refreshToken === token,
+    );
     if (!currentDevice)
       throw new CustomException(StatusEnum.UNAUTHORIZED, 'Not authorized');
 

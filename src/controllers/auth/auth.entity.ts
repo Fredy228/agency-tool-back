@@ -54,8 +54,11 @@ export class UserDevices {
   createAt: Date;
 
   @Column({ type: 'varchar', length: 250, nullable: false })
-  token: string;
+  accessToken: string;
 
-  @ManyToOne(() => User, (user) => user.devices)
+  @Column({ type: 'varchar', length: 250, nullable: false })
+  refreshToken: string;
+
+  @ManyToOne(() => User, (user) => user.devices, { cascade: true })
   userId: User;
 }
