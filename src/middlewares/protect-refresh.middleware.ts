@@ -6,7 +6,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 
 import { CustomException } from '../services/custom-exception';
 import { StatusEnum } from '../enum/error/StatusEnum';
-import { User, UserDevices } from '../controllers/auth/auth.entity';
+import { User, UserDevices } from '../entity/user.entity';
 
 @Injectable()
 export class ProtectRefreshMiddleware implements NestMiddleware {

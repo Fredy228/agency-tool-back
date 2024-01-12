@@ -4,7 +4,7 @@ import { EntityManager, Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { v4 as uuidv4 } from 'uuid';
 
-import { User, UserDevices } from './auth.entity';
+import { User, UserDevices } from '../../entity/user.entity';
 import { LoginAuthDto, RegisterAuthDto } from './auth.dto';
 import { StatusEnum } from '../../enum/error/StatusEnum';
 import { TokenType } from '../../types/token-type';
@@ -12,7 +12,7 @@ import { CustomException } from '../../services/custom-exception';
 import { checkPassword, hashPassword } from '../../services/hashPassword';
 
 @Injectable()
-export class UserService {
+export class AuthService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
@@ -46,15 +46,11 @@ export class UserService {
         `Username or password is wrong`,
       );
 
-    console.log('user', user);
-
-    user.password = null;
-
     await this.deleteOldSession(user.devices);
 
     const tokens = await this.addDeviceAuth(deviceModel, user);
 
-    return { ...user, ...tokens };
+    return { ...user, ...tokens, password: null };
   }
 
   async signUpCredentials({
@@ -87,9 +83,7 @@ export class UserService {
 
     const tokens = await this.addDeviceAuth(deviceModel, newUser);
 
-    newUser.password = null;
-
-    return { ...newUser, ...tokens };
+    return { ...newUser, ...tokens, password: null };
   }
 
   async authGoogle(
@@ -114,8 +108,7 @@ export class UserService {
 
       const tokens = await this.addDeviceAuth(deviceModel, currentUser);
 
-      currentUser.password = null;
-      return { ...currentUser, ...tokens };
+      return { ...currentUser, ...tokens, password: null };
     }
 
     if (!currentUser) {
@@ -124,14 +117,15 @@ export class UserService {
         email: decodedToken.email,
         password: hashPass,
         firstName: decodedToken.firstName,
+        lastName: decodedToken.lastName,
+        image: decodedToken.image,
       });
 
       await this.usersRepository.save(newUser);
 
       const tokens = await this.addDeviceAuth(deviceModel, newUser);
 
-      newUser.password = null;
-      return { ...newUser, ...tokens };
+      return { ...newUser, ...tokens, password: null };
     }
   }
 
@@ -155,6 +149,19 @@ export class UserService {
           .execute();
 
         return newTokens;
+      },
+    );
+  }
+
+  async logout(currentDevice: UserDevices): Promise<void> {
+    return this.entityManager.transaction(
+      async (transactionalEntityManager) => {
+        await transactionalEntityManager
+          .getRepository(UserDevices)
+          .createQueryBuilder()
+          .delete()
+          .where('id = :id', { id: currentDevice.id })
+          .execute();
       },
     );
   }

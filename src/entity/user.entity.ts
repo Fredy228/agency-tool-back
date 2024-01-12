@@ -22,6 +22,9 @@ export class User {
   @Column({ type: 'varchar', length: 100, nullable: false })
   firstName: string;
 
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  lastName: string;
+
   @Column({ type: 'tinyint', nullable: true })
   sex: number;
 
@@ -59,6 +62,6 @@ export class UserDevices {
   @Column({ type: 'varchar', length: 250, nullable: false })
   refreshToken: string;
 
-  @ManyToOne(() => User, (user) => user.devices, { cascade: true })
+  @ManyToOne(() => User, (user) => user.devices, { onDelete: 'CASCADE' })
   userId: User;
 }

@@ -6,7 +6,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 
 import { CustomException } from '../services/custom-exception';
 import { StatusEnum } from '../enum/error/StatusEnum';
-import { User } from '../controllers/auth/auth.entity';
+import { User } from '../entity/user.entity';
 
 @Injectable()
 export class ProtectAuthMiddleware implements NestMiddleware {
@@ -23,6 +23,8 @@ export class ProtectAuthMiddleware implements NestMiddleware {
 
     if (!token)
       throw new CustomException(StatusEnum.UNAUTHORIZED, 'Not authorized');
+
+    console.log('token-front', token);
 
     const decodedToken = await this.jwtService.verify(token);
 

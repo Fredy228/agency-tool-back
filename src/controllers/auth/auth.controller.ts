@@ -9,32 +9,31 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 
-// import { UserAgent } from 'express-useragent';
-
 import { LoginAuthDto, RegisterAuthDto } from './auth.dto';
-import { UserService } from './auth.service';
+import { AuthService } from './auth.service';
 
 import { BodyValidationPipe } from '../../pipe/validator-body.pipe';
 import { userCreateSchema } from '../../joi-schema/userSchema';
 import { CustomException } from '../../services/custom-exception';
 import { StatusEnum } from '../../enum/error/StatusEnum';
-import { User, UserDevices } from './auth.entity';
+import { User, UserDevices } from '../../entity/user.entity';
 
 @Controller('api/auth')
 export class AuthController {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly authService: AuthService) {}
 
   @Post('/register')
   @HttpCode(201)
   @UsePipes(new BodyValidationPipe(userCreateSchema))
   async register(@Body() registerBody: RegisterAuthDto) {
-    return this.userService.signUpCredentials(registerBody);
+    return this.authService.signUpCredentials(registerBody);
   }
 
   @Post('/login')
   @HttpCode(200)
   async login(@Body() loginBody: LoginAuthDto) {
-    return this.userService.signInCredentials(loginBody);
+    console.log('------body----', loginBody);
+    return this.authService.signInCredentials(loginBody);
   }
 
   @Get('/google')
@@ -48,7 +47,7 @@ export class AuthController {
       throw new CustomException(StatusEnum.UNAUTHORIZED, 'Not authorized');
     }
 
-    return this.userService.authGoogle(token);
+    return this.authService.authGoogle(token);
   }
 
   @Get('/refresh')
@@ -56,6 +55,14 @@ export class AuthController {
   async refreshToken(
     @Req() req: Request & { user: User; currentDevice: UserDevices },
   ) {
-    return this.userService.refreshToken(req.user, req.currentDevice);
+    return this.authService.refreshToken(req.user, req.currentDevice);
+  }
+
+  @Get('/logout')
+  @HttpCode(204)
+  async logOut(
+    @Req() req: Request & { user: User; currentDevice: UserDevices },
+  ) {
+    return this.authService.logout(req.currentDevice);
   }
 }

@@ -2,7 +2,7 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import * as dotenv from 'dotenv';
 import * as process from 'process';
 
-import { User, UserDevices } from '../controllers/auth/auth.entity';
+import { User, UserDevices } from '../entity/user.entity';
 
 dotenv.config();
 
@@ -15,7 +15,7 @@ const config: TypeOrmModuleOptions = {
   database: process.env.DB_NAME,
   entities: [User, UserDevices],
   synchronize: process.env.PRODUCTION !== 'true', // В режиме разработки можно устанавливать в true, но в продакшене лучше false
-  logging: true,
+  logging: process.env.PRODUCTION !== 'true',
 };
 
 export default config;
