@@ -2,7 +2,6 @@ import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import * as dotenv from 'dotenv';
 import * as process from 'process';
-import * as expressUserAgent from 'express-useragent';
 
 dotenv.config();
 
@@ -12,8 +11,6 @@ async function bootstrap() {
     logger: ['error', 'warn', 'log'],
     cors: true,
   });
-
-  app.use(expressUserAgent.express());
 
   const PORT = process.env.PORT || 3333;
 

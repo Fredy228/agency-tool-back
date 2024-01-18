@@ -68,8 +68,6 @@ export class AuthService {
 
     const hashPass = await hashPassword(password);
 
-    console.log(firstName);
-
     const name = firstName
       ? firstName
       : `user${Math.floor(Math.random() * 90000) + 10000}`;

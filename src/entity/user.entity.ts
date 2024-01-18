@@ -6,6 +6,7 @@ import {
   PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm';
+import { Organization } from './organization.entity';
 
 @Entity({ name: 'user' })
 @Unique(['email'])
@@ -37,8 +38,18 @@ export class User {
   @Column({ type: 'tinyint', default: 0, nullable: false })
   firstSettings: number;
 
+  @Column({
+    name: 'createAt',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  createAt: Date;
+
   @OneToMany(() => UserDevices, (device) => device.userId)
   devices: UserDevices[];
+
+  @OneToMany(() => Organization, (organization) => organization.userId)
+  organizations: Organization[];
 }
 
 @Entity({ name: 'user_devices' })

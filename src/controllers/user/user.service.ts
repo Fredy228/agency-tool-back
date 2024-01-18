@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User, UserDevices } from '../../entity/user.entity';
 import { EntityManager, Repository } from 'typeorm';
-import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class UserService {
@@ -11,7 +10,6 @@ export class UserService {
     private usersRepository: Repository<User>,
     @InjectRepository(UserDevices)
     private devicesRepository: Repository<UserDevices>,
-    private jwtService: JwtService,
     private readonly entityManager: EntityManager,
   ) {}
 

@@ -5,6 +5,7 @@ import { AuthModule } from './controllers/auth/auth.module';
 import * as process from 'process';
 import { JwtModule } from '@nestjs/jwt';
 import { UserModule } from './controllers/user/user.module';
+import { OrganizationModule } from './controllers/organization/organization.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { UserModule } from './controllers/user/user.module';
     }),
     AuthModule,
     UserModule,
+    OrganizationModule,
   ],
 })
 export class MainModule {}
