@@ -6,6 +6,7 @@ import {
   PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm';
+import { JsonTransformer } from '@anchan828/typeorm-transformers';
 import { Organization } from './organization.entity';
 
 @Entity({ name: 'user' })
@@ -37,6 +38,13 @@ export class User {
 
   @Column({ type: 'tinyint', default: 0, nullable: false })
   firstSettings: number;
+
+  @Column({
+    type: 'varchar',
+    length: 255,
+    transformer: new JsonTransformer({ verified: false, firstSettings: false }),
+  })
+  settings: { verified: boolean; firstSettings: boolean };
 
   @Column({
     name: 'createAt',

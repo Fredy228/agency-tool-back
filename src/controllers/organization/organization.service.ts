@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../../entity/user.entity';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager, Repository, type UpdateResult } from 'typeorm';
 import { Organization } from '../../entity/organization.entity';
 import { CustomException } from '../../services/custom-exception';
 import { StatusEnum } from '../../enum/error/StatusEnum';
@@ -45,6 +45,9 @@ export class OrganizationService {
       userId: user,
     });
 
+    console.log('user', user);
+    console.log('foundOrg', foundOrg);
+
     if (!foundOrg)
       throw new CustomException(
         StatusEnum.NOT_FOUND,
@@ -52,5 +55,34 @@ export class OrganizationService {
       );
 
     return foundOrg;
+  }
+
+  async updateOrganization(
+    user: User,
+    name: string | undefined,
+  ): Promise<UpdateResult> {
+    const foundOrg = await this.organizationRepository.findOneBy({
+      userId: user,
+    });
+
+    if (!foundOrg)
+      throw new CustomException(
+        StatusEnum.NOT_FOUND,
+        `The organization was not found`,
+      );
+
+    return this.entityManager.transaction(
+      async (transactionalEntityManager) => {
+        const updater = transactionalEntityManager
+          .getRepository(Organization)
+          .createQueryBuilder()
+          .update(Organization)
+          .where('id = :id', { id: foundOrg.id });
+
+        if (name) updater.set({ name });
+
+        return await updater.execute();
+      },
+    );
   }
 }

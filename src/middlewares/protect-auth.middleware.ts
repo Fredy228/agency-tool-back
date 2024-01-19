@@ -24,8 +24,6 @@ export class ProtectAuthMiddleware implements NestMiddleware {
     if (!token)
       throw new CustomException(StatusEnum.UNAUTHORIZED, 'Not authorized');
 
-    console.log('token-front', token);
-
     const decodedToken = await this.jwtService.verify(token);
 
     const currentUser = await this.usersRepository.findOneBy({
@@ -36,6 +34,8 @@ export class ProtectAuthMiddleware implements NestMiddleware {
       throw new CustomException(StatusEnum.UNAUTHORIZED, 'Not authorized');
 
     req.user = currentUser;
+
+    // console.log('currentUser', currentUser);
 
     next();
   }

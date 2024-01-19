@@ -13,9 +13,19 @@ import { User } from '../../entity/user.entity';
 })
 export class OrganizationModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(ProtectAuthMiddleware).forRoutes({
-      path: '/api/organization',
-      method: RequestMethod.POST,
-    });
+    consumer.apply(ProtectAuthMiddleware).forRoutes(
+      {
+        path: '/api/organization',
+        method: RequestMethod.POST,
+      },
+      {
+        path: '/api/organization',
+        method: RequestMethod.GET,
+      },
+      {
+        path: '/api/organization',
+        method: RequestMethod.PATCH,
+      },
+    );
   }
 }
