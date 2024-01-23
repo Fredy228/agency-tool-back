@@ -6,8 +6,8 @@ import {
   PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm';
-import { JsonTransformer } from '@anchan828/typeorm-transformers';
 import { Organization } from './organization.entity';
+import { PlanEnum } from '../enum/plan-enum';
 
 @Entity({ name: 'user' })
 @Unique(['email'])
@@ -18,7 +18,7 @@ export class User {
   @Column({ type: 'varchar', length: 100, nullable: false })
   email: string;
 
-  @Column({ type: 'varchar', length: 100, nullable: false })
+  @Column({ type: 'varchar', length: 250, nullable: false })
   password: string;
 
   @Column({ type: 'varchar', length: 100, nullable: false })
@@ -36,15 +36,14 @@ export class User {
   @Column({ type: 'tinyint', default: 0, nullable: false })
   verified: number;
 
-  @Column({ type: 'tinyint', default: 0, nullable: false })
-  firstSettings: number;
-
   @Column({
-    type: 'varchar',
-    length: 255,
-    transformer: new JsonTransformer({ verified: false, firstSettings: false }),
+    type: 'simple-json',
+    default: null,
   })
-  settings: { verified: boolean; firstSettings: boolean };
+  settings: {
+    restorePassAt: Date | null;
+    plan: PlanEnum;
+  };
 
   @Column({
     name: 'createAt',

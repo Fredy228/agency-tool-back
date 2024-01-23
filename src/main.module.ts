@@ -6,6 +6,7 @@ import * as process from 'process';
 import { JwtModule } from '@nestjs/jwt';
 import { UserModule } from './controllers/user/user.module';
 import { OrganizationModule } from './controllers/organization/organization.module';
+import { DashboardModule } from './controllers/dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { OrganizationModule } from './controllers/organization/organization.modu
     AuthModule,
     UserModule,
     OrganizationModule,
+    DashboardModule,
   ],
 })
 export class MainModule {}

@@ -1,5 +1,12 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { User } from './user.entity';
+import { Dashboard } from './dashboard.entity';
 
 @Entity({ name: 'organization' })
 export class Organization {
@@ -23,6 +30,15 @@ export class Organization {
   @Column({ type: 'varchar', length: 250, nullable: true })
   logoUrl: string;
 
+  @Column({
+    type: 'simple-array',
+    default: null,
+  })
+  customScreens: string[];
+
   @ManyToOne(() => User, (user) => user.organizations, { onDelete: 'CASCADE' })
   userId: User;
+
+  @OneToMany(() => Dashboard, (dashboard) => dashboard.orgId)
+  dashboards: Dashboard[];
 }

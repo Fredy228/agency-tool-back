@@ -4,6 +4,7 @@ import * as process from 'process';
 
 import { User, UserDevices } from '../entity/user.entity';
 import { Organization } from '../entity/organization.entity';
+import { Dashboard } from '../entity/dashboard.entity';
 
 dotenv.config();
 
@@ -14,7 +15,7 @@ const config: TypeOrmModuleOptions = {
   username: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  entities: [User, UserDevices, Organization],
+  entities: [User, UserDevices, Organization, Dashboard],
   synchronize: process.env.PRODUCTION !== 'true', // В режиме разработки можно устанавливать в true, но в продакшене лучше false
   logging: process.env.PRODUCTION !== 'true',
 };

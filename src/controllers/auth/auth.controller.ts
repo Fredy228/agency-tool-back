@@ -32,7 +32,6 @@ export class AuthController {
   @Post('/login')
   @HttpCode(200)
   async login(@Body() loginBody: LoginAuthDto) {
-    console.log('------body----', loginBody);
     return this.authService.signInCredentials(loginBody);
   }
 

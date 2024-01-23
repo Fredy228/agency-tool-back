@@ -45,9 +45,6 @@ export class OrganizationService {
       userId: user,
     });
 
-    console.log('user', user);
-    console.log('foundOrg', foundOrg);
-
     if (!foundOrg)
       throw new CustomException(
         StatusEnum.NOT_FOUND,
@@ -79,7 +76,7 @@ export class OrganizationService {
           .update(Organization)
           .where('id = :id', { id: foundOrg.id });
 
-        if (name) updater.set({ name });
+        updater.set({ name });
 
         return await updater.execute();
       },
