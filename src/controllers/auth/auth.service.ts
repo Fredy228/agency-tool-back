@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { v4 as uuidv4 } from 'uuid';
+import { Details } from 'express-useragent';
 
 import { User, UserDevices } from '../../entity/user.entity';
 import { LoginAuthDto, RegisterAuthDto } from './auth.dto';
@@ -186,6 +187,29 @@ export class AuthService {
           },
         );
       }),
+    );
+  }
+
+  async userAgent(
+    currDevice: UserDevices,
+    userAgent: Details,
+  ): Promise<string> {
+    return this.entityManager.transaction(
+      async (transactionalEntityManager) => {
+        const device = `${userAgent.platform} ${userAgent.os} ${userAgent.browser}`;
+
+        await transactionalEntityManager
+          .getRepository(UserDevices)
+          .createQueryBuilder()
+          .update(UserDevices)
+          .set({
+            deviceModel: device,
+          })
+          .where('id = :id', { id: currDevice.id })
+          .execute();
+
+        return device;
+      },
     );
   }
 

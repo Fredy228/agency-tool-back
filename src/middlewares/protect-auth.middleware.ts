@@ -35,8 +35,6 @@ export class ProtectAuthMiddleware implements NestMiddleware {
 
     req.user = currentUser;
 
-    // console.log('currentUser', currentUser);
-
     next();
   }
 }

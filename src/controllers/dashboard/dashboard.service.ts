@@ -28,10 +28,10 @@ export class DashboardService {
 
     console.log('foundOrg', foundOrg);
 
-    if (foundOrg.dashboards.length >= 3)
+    if (foundOrg.dashboards.length >= 6)
       throw new CustomException(
         StatusEnum.BAD_REQUEST,
-        `Your Dashboards limit is 3.`,
+        `Your Dashboards limit is 6.`,
       );
 
     const newOrg = this.dashboardRepository.create({

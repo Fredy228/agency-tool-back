@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   HttpCode,
+  Patch,
   Post,
   Req,
   UsePipes,
@@ -63,5 +64,14 @@ export class AuthController {
     @Req() req: Request & { user: User; currentDevice: UserDevices },
   ) {
     return this.authService.logout(req.currentDevice);
+  }
+
+  @Patch('/user-agent')
+  @HttpCode(200)
+  async userAgent(
+    @Req() req: Request & { user: User; currentDevice: UserDevices },
+  ) {
+    const userAgent = req['useragent'];
+    return this.authService.userAgent(req.currentDevice, userAgent);
   }
 }

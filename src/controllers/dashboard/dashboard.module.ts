@@ -12,4 +12,11 @@ import { DashboardService } from './dashboard.service';
   controllers: [DashboardController],
   providers: [DashboardService],
 })
-export class DashboardModule {}
+export class DashboardModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(ProtectAuthMiddleware).forRoutes({
+      path: '/api/dashboard',
+      method: RequestMethod.POST,
+    });
+  }
+}

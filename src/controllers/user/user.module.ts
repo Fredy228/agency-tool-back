@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User, UserDevices } from '../../entity/user.entity';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
-import { ProtectAuthMiddleware } from '../../middlewares/protect-auth.middleware';
+import { ProtectRefreshMiddleware } from '../../middlewares/protect-refresh.middleware';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User, UserDevices])],
@@ -12,7 +12,7 @@ import { ProtectAuthMiddleware } from '../../middlewares/protect-auth.middleware
 })
 export class UserModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(ProtectAuthMiddleware).forRoutes({
+    consumer.apply(ProtectRefreshMiddleware).forRoutes({
       path: '/api/user',
       method: RequestMethod.GET,
     });
