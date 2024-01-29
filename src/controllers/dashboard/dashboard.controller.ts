@@ -45,6 +45,7 @@ export class DashboardController {
     },
     @Body() body: DashboardDto,
   ) {
+    console.log('body', body);
     return this.dashboardService.createDashboard(req.user, body);
   }
 
