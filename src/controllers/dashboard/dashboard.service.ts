@@ -35,7 +35,8 @@ export class DashboardService {
         `Your Dashboards limit is 6.`,
       );
 
-    const encrypt = encryptionData(body.password);
+    console.log('body.password', body.password);
+    const encrypt = encryptionData(String(body.password));
 
     const newOrg = this.dashboardRepository.create({
       ...body,
