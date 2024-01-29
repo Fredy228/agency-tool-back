@@ -14,9 +14,19 @@ import { DashboardService } from './dashboard.service';
 })
 export class DashboardModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(ProtectAuthMiddleware).forRoutes({
-      path: '/api/dashboard',
-      method: RequestMethod.POST,
-    });
+    consumer.apply(ProtectAuthMiddleware).forRoutes(
+      {
+        path: '/api/dashboard',
+        method: RequestMethod.POST,
+      },
+      {
+        path: '/api/dashboard',
+        method: RequestMethod.GET,
+      },
+      {
+        path: '/api/dashboard/:idDashboard',
+        method: RequestMethod.DELETE,
+      },
+    );
   }
 }

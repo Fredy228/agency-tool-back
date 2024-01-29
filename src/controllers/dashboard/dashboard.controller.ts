@@ -1,7 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
+  Get,
   HttpCode,
+  Param,
   Post,
   Req,
   UploadedFiles,
@@ -16,6 +19,7 @@ import { Request } from 'express';
 import { User } from '../../entity/user.entity';
 import { dashboardCreateSchema } from '../../joi-schema/dashboardSchema';
 import { DashboardDto } from './dashboard.dto';
+import { Dashboard } from '../../entity/dashboard.entity';
 
 @Controller('api/dashboard')
 export class DashboardController {
@@ -38,10 +42,24 @@ export class DashboardController {
     @UploadedFiles()
     files: {
       logoPartner?: Array<Express.Multer.File>;
-      imageScreen?: Array<Express.Multer.File>;
     },
     @Body() body: DashboardDto,
   ) {
     return this.dashboardService.createDashboard(req.user, body);
+  }
+
+  @Get('/')
+  @HttpCode(200)
+  async getAll(@Req() req: Request & { user: User }): Promise<Dashboard[]> {
+    return this.dashboardService.getDashboards(req.user);
+  }
+
+  @Delete('/:idDashboard')
+  @HttpCode(204)
+  async delete(
+    @Param('idDashboard') idDashb: string,
+    @Req() req: Request & { user: User },
+  ) {
+    return this.dashboardService.deleteDashboard(req.user, Number(idDashb));
   }
 }

@@ -17,16 +17,19 @@ export const dashboardCreateSchema = Joi.object()
       'string.min': 'textOne|The textOne cannot be less than 3 characters',
       'string.max': 'textOne|The textOne cannot be more than 100 characters',
     }),
-    textTwo: Joi.string().min(3).max(100).required().messages({
-      'string.empty': 'textTwo|The textOne is empty.',
-      'string.min': 'textTwo|The textOne cannot be less than 3 characters',
-      'string.max': 'textTwo|The textOne cannot be more than 100 characters',
+    textTwo: Joi.string().min(3).max(110).required().messages({
+      'string.empty': 'textTwo|The textTwo is empty.',
+      'string.min': 'textTwo|The textTwo cannot be less than 3 characters',
+      'string.max': 'textTwo|The textTwo cannot be more than 110 characters',
     }),
-    textThree: Joi.string().min(3).max(100).required().messages({
+    textThree: Joi.string().min(3).max(110).required().messages({
       'string.empty': 'textThree|The textThree is empty.',
       'string.min': 'textThree|The textThree cannot be less than 3 characters',
       'string.max':
-        'textThree|The textThree cannot be more than 100 characters',
+        'textThree|The textThree cannot be more than 110 characters',
+    }),
+    screenUrl: Joi.string().required().messages({
+      'string.empty': 'screenUrl|The screenUrl is empty.',
     }),
   })
   .options({ stripUnknown: true });

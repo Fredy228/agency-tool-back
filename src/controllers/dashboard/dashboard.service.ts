@@ -7,6 +7,7 @@ import { User } from '../../entity/user.entity';
 import { CustomException } from '../../services/custom-exception';
 import { StatusEnum } from '../../enum/error/StatusEnum';
 import { DashboardDto } from './dashboard.dto';
+import { decryptionData, encryptionData } from '../../services/encryption-data';
 
 @Injectable()
 export class DashboardService {
@@ -34,14 +35,63 @@ export class DashboardService {
         `Your Dashboards limit is 6.`,
       );
 
+    const encrypt = encryptionData(body.password);
+
     const newOrg = this.dashboardRepository.create({
       ...body,
-      screenUrl:
-        'https://s3-alpha-sig.figma.com/img/6472/84c4/5a4cfaddcd2f1e70c7ca34f86c09438a?Expires=1707091200&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=d266viCAS8gNAg56Bb9sZSkhSP~6q8p7YS8ExaxIesNiZuqHsUlprwxVqAjSKoN3UgTS3tClEjWbvQzCzmP9aLfv7PNIvd1RuBzV7wiltpQWZ0Gdx-BNPGZykrGqowUzZ1HzBYmrfhePRuxW9ZClMR8YSQKF9KTZMVuOXei-Fdn5hEdwDLBiuYOFQ8mId-RH0i5Us0OSWq2WhrLXgllGER2PTEUhAbDBgptC4uvUWCRToEJFWsKsBKMJePwT-F6Pw6i3DN9BJF-gRDuNXSG927n4ecYw2lqbufroeuyPw8msBfj49ShWbsW63xvvU8oXwCpOYe0U93hp00ErFTOncg__',
+      password: encrypt,
       orgId: foundOrg,
     });
     await this.dashboardRepository.save(newOrg);
 
+    newOrg.password = undefined;
+
     return newOrg;
+  }
+
+  async getDashboards(user: User): Promise<Dashboard[]> {
+    const foundOrg = await this.organizationRepository.findOneBy({
+      userId: user,
+    });
+
+    if (!foundOrg)
+      throw new CustomException(
+        StatusEnum.NOT_FOUND,
+        `The organization was not found`,
+      );
+
+    const foundDashboards = await this.dashboardRepository.find({
+      select: {
+        id: true,
+        name: true,
+        screenUrl: true,
+      },
+      where: {
+        orgId: foundOrg,
+      },
+    });
+
+    console.log('foundDashboards', foundDashboards);
+
+    return foundDashboards;
+  }
+
+  async deleteDashboard(user: User, idDash: number) {
+    if (!idDash)
+      throw new CustomException(StatusEnum.BAD_REQUEST, `Incorrect id`);
+
+    const foundDashboard = await this.dashboardRepository.findOne({
+      where: {
+        id: idDash,
+        orgId: {
+          userId: user,
+        },
+      },
+    });
+
+    if (!foundDashboard)
+      throw new CustomException(StatusEnum.NOT_FOUND, `Not found dashboard`);
+
+    return await this.dashboardRepository.delete(foundDashboard.id);
   }
 }
