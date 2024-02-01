@@ -1,8 +1,12 @@
-import { ArgumentMetadata, Injectable, PipeTransform } from '@nestjs/common';
+import {
+  ArgumentMetadata,
+  HttpStatus,
+  Injectable,
+  PipeTransform,
+} from '@nestjs/common';
 import { ArraySchema, ObjectSchema } from 'joi';
 
 import { CustomException } from '../services/custom-exception';
-import { StatusEnum } from '../enum/error/StatusEnum';
 
 @Injectable()
 export class BodyValidationPipe implements PipeTransform {
@@ -16,7 +20,7 @@ export class BodyValidationPipe implements PipeTransform {
     const { error } = this.schema.validate(value);
     console.log(error);
     if (error) {
-      throw new CustomException(StatusEnum.BAD_REQUEST, error.message);
+      throw new CustomException(HttpStatus.BAD_REQUEST, error.message);
     }
     return value;
   }

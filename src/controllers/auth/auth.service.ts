@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
@@ -7,7 +7,6 @@ import { Details } from 'express-useragent';
 
 import { User, UserDevices } from '../../entity/user.entity';
 import { LoginAuthDto, RegisterAuthDto } from './auth.dto';
-import { StatusEnum } from '../../enum/error/StatusEnum';
 import { TokenType } from '../../types/token-type';
 import { CustomException } from '../../services/custom-exception';
 import { checkPassword, hashPassword } from '../../services/hashPassword';
@@ -36,14 +35,14 @@ export class AuthService {
 
     if (!user)
       throw new CustomException(
-        StatusEnum.UNAUTHORIZED,
+        HttpStatus.UNAUTHORIZED,
         `Username or password is wrong`,
       );
     const isValidPass = await checkPassword(password, user.password);
 
     if (!isValidPass)
       throw new CustomException(
-        StatusEnum.UNAUTHORIZED,
+        HttpStatus.UNAUTHORIZED,
         `Username or password is wrong`,
       );
 
@@ -63,7 +62,7 @@ export class AuthService {
     const userFound = await this.usersRepository.findOneBy({ email });
     if (userFound)
       throw new CustomException(
-        StatusEnum.UNAUTHORIZED,
+        HttpStatus.UNAUTHORIZED,
         `Such a user already exists`,
       );
 
@@ -95,7 +94,7 @@ export class AuthService {
     const currTime = new Date().getTime();
 
     if (currExp < currTime)
-      throw new CustomException(StatusEnum.UNAUTHORIZED, `Not verify(auth)`);
+      throw new CustomException(HttpStatus.UNAUTHORIZED, `Not verify(auth)`);
 
     const currentUser = await this.usersRepository.findOne({
       where: { email: decodedToken.email },

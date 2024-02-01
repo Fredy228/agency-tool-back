@@ -8,7 +8,7 @@ import { CustomException } from '../services/custom-exception';
 import { User } from '../entity/user.entity';
 
 @Injectable()
-export class ProtectAuthMiddleware implements NestMiddleware {
+export class CheckUserMiddleware implements NestMiddleware {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
@@ -20,8 +20,7 @@ export class ProtectAuthMiddleware implements NestMiddleware {
       req.headers.authorization?.startsWith('Bearer') &&
       req.headers.authorization.split(' ')[1];
 
-    if (!token)
-      throw new CustomException(HttpStatus.UNAUTHORIZED, 'Not authorized');
+    if (!token) return next();
 
     const decodedToken = await this.jwtService.verify(token);
 

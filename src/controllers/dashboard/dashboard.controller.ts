@@ -6,6 +6,7 @@ import {
   HttpCode,
   Param,
   Post,
+  Query,
   Req,
   UploadedFiles,
   UseInterceptors,
@@ -53,6 +54,20 @@ export class DashboardController {
   @HttpCode(200)
   async getAll(@Req() req: Request & { user: User }): Promise<Dashboard[]> {
     return this.dashboardService.getDashboards(req.user);
+  }
+
+  @Get('/:idDashboard')
+  @HttpCode(200)
+  async getOne(
+    @Param('idDashboard') idDashb: string,
+    @Req() req: Request & { user: User },
+    @Query('password') password: string,
+  ): Promise<Dashboard> {
+    return this.dashboardService.getOneDashboard(
+      Number(idDashb),
+      password,
+      req.user,
+    );
   }
 
   @Delete('/:idDashboard')

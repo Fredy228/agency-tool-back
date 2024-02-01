@@ -1,10 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../../entity/user.entity';
 import { EntityManager, Repository, type UpdateResult } from 'typeorm';
 import { Organization } from '../../entity/organization.entity';
 import { CustomException } from '../../services/custom-exception';
-import { StatusEnum } from '../../enum/error/StatusEnum';
 
 @Injectable()
 export class OrganizationService {
@@ -27,7 +26,7 @@ export class OrganizationService {
 
     if (foundOrg)
       throw new CustomException(
-        StatusEnum.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST,
         `The organization already exists`,
       );
 
@@ -47,7 +46,7 @@ export class OrganizationService {
 
     if (!foundOrg)
       throw new CustomException(
-        StatusEnum.NOT_FOUND,
+        HttpStatus.NOT_FOUND,
         `The organization was not found`,
       );
 
@@ -64,7 +63,7 @@ export class OrganizationService {
 
     if (!foundOrg)
       throw new CustomException(
-        StatusEnum.NOT_FOUND,
+        HttpStatus.NOT_FOUND,
         `The organization was not found`,
       );
 

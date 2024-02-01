@@ -1,6 +1,10 @@
-import { ArgumentMetadata, Injectable, PipeTransform } from '@nestjs/common';
+import {
+  ArgumentMetadata,
+  HttpStatus,
+  Injectable,
+  PipeTransform,
+} from '@nestjs/common';
 import { CustomException } from '../services/custom-exception';
-import { StatusEnum } from '../enum/error/StatusEnum';
 
 type TFileImg = {
   [key: string]: Array<Express.Multer.File>;
@@ -22,7 +26,7 @@ export class ImageValidatorPipe implements PipeTransform {
         files[key].forEach((item: Express.Multer.File) => {
           if (item.mimetype.split('/')[0] !== 'image')
             throw new CustomException(
-              StatusEnum.BAD_REQUEST,
+              HttpStatus.BAD_REQUEST,
               `Only images can be uploaded`,
             );
 
@@ -32,13 +36,13 @@ export class ImageValidatorPipe implements PipeTransform {
             )
           )
             throw new CustomException(
-              StatusEnum.BAD_REQUEST,
+              HttpStatus.BAD_REQUEST,
               `Invalid image format`,
             );
 
           if (item.size / (1024 * 1024) > this.options.maxSize)
             throw new CustomException(
-              StatusEnum.BAD_REQUEST,
+              HttpStatus.BAD_REQUEST,
               `The file is too large. Maximum size ${this.options.maxSize} MB`,
             );
         });

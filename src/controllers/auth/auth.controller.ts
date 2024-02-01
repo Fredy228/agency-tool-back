@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   HttpCode,
+  HttpStatus,
   Patch,
   Post,
   Req,
@@ -16,7 +17,6 @@ import { AuthService } from './auth.service';
 import { BodyValidationPipe } from '../../pipe/validator-body.pipe';
 import { userCreateSchema } from '../../joi-schema/userSchema';
 import { CustomException } from '../../services/custom-exception';
-import { StatusEnum } from '../../enum/error/StatusEnum';
 import { User, UserDevices } from '../../entity/user.entity';
 
 @Controller('api/auth')
@@ -44,7 +44,7 @@ export class AuthController {
       req.headers.authorization.split(' ')[1];
 
     if (!token) {
-      throw new CustomException(StatusEnum.UNAUTHORIZED, 'Not authorized');
+      throw new CustomException(HttpStatus.UNAUTHORIZED, 'Not authorized');
     }
 
     return this.authService.authGoogle(token);

@@ -1,11 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Organization } from '../../entity/organization.entity';
 import { EntityManager, Repository } from 'typeorm';
 import { Dashboard } from '../../entity/dashboard.entity';
 import { User } from '../../entity/user.entity';
 import { CustomException } from '../../services/custom-exception';
-import { StatusEnum } from '../../enum/error/StatusEnum';
 import { DashboardDto } from './dashboard.dto';
 import { decryptionData, encryptionData } from '../../services/encryption-data';
 
@@ -27,16 +26,13 @@ export class DashboardService {
       },
     });
 
-    console.log('foundOrg', foundOrg);
-
     if (foundOrg.dashboards.length >= 6)
       throw new CustomException(
-        StatusEnum.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST,
         `Your Dashboards limit is 6.`,
       );
 
-    console.log('body.password', body.password);
-    const encrypt = encryptionData(String(body.password));
+    const encrypt = encryptionData(body.password);
 
     const newOrg = this.dashboardRepository.create({
       ...body,
@@ -57,11 +53,11 @@ export class DashboardService {
 
     if (!foundOrg)
       throw new CustomException(
-        StatusEnum.NOT_FOUND,
+        HttpStatus.NOT_FOUND,
         `The organization was not found`,
       );
 
-    const foundDashboards = await this.dashboardRepository.find({
+    return await this.dashboardRepository.find({
       select: {
         id: true,
         name: true,
@@ -71,15 +67,48 @@ export class DashboardService {
         orgId: foundOrg,
       },
     });
+  }
 
-    console.log('foundDashboards', foundDashboards);
+  async getOneDashboard(
+    id: number,
+    password: string,
+    user: User,
+  ): Promise<Dashboard> {
+    const foundDashboard = await this.dashboardRepository.findOne({
+      where: { id },
+      relations: {
+        orgId: {
+          userId: true,
+        },
+      },
+    });
 
-    return foundDashboards;
+    if (!foundDashboard)
+      throw new CustomException(
+        HttpStatus.NOT_FOUND,
+        `Not found dashboard or Wrong password`,
+      );
+
+    if (user && foundDashboard.orgId.userId.id === user.id)
+      return foundDashboard;
+
+    if (!password)
+      throw new CustomException(HttpStatus.NOT_FOUND, `No password entered`);
+
+    const decryptPass = decryptionData(foundDashboard.password);
+
+    if (decryptPass !== password)
+      throw new CustomException(
+        HttpStatus.BAD_REQUEST,
+        `Not found dashboard or Wrong password`,
+      );
+
+    return foundDashboard;
   }
 
   async deleteDashboard(user: User, idDash: number) {
     if (!idDash)
-      throw new CustomException(StatusEnum.BAD_REQUEST, `Incorrect id`);
+      throw new CustomException(HttpStatus.BAD_REQUEST, `Incorrect id`);
 
     const foundDashboard = await this.dashboardRepository.findOne({
       where: {
@@ -91,7 +120,7 @@ export class DashboardService {
     });
 
     if (!foundDashboard)
-      throw new CustomException(StatusEnum.NOT_FOUND, `Not found dashboard`);
+      throw new CustomException(HttpStatus.NOT_FOUND, `Not found dashboard`);
 
     return await this.dashboardRepository.delete(foundDashboard.id);
   }

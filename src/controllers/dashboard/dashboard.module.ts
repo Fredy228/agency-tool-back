@@ -6,6 +6,7 @@ import { ProtectAuthMiddleware } from '../../middlewares/protect-auth.middleware
 import { Dashboard } from '../../entity/dashboard.entity';
 import { DashboardController } from './dashboard.controller';
 import { DashboardService } from './dashboard.service';
+import { CheckUserMiddleware } from '../../middlewares/check-user.middleware';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Organization, User, Dashboard])],
@@ -28,5 +29,10 @@ export class DashboardModule {
         method: RequestMethod.DELETE,
       },
     );
+
+    consumer.apply(CheckUserMiddleware).forRoutes({
+      path: '/api/dashboard/:idDashboard',
+      method: RequestMethod.GET,
+    });
   }
 }
