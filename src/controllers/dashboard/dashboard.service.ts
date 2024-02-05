@@ -84,24 +84,18 @@ export class DashboardService {
     });
 
     if (!foundDashboard)
-      throw new CustomException(
-        HttpStatus.NOT_FOUND,
-        `Not found dashboard or Wrong password`,
-      );
+      throw new CustomException(HttpStatus.NOT_FOUND, `Not found dashboard`);
 
     if (user && foundDashboard.orgId.userId.id === user.id)
       return foundDashboard;
 
     if (!password)
-      throw new CustomException(HttpStatus.NOT_FOUND, `No password entered`);
+      throw new CustomException(HttpStatus.BAD_REQUEST, `No password entered`);
 
     const decryptPass = decryptionData(foundDashboard.password);
 
     if (decryptPass !== password)
-      throw new CustomException(
-        HttpStatus.BAD_REQUEST,
-        `Not found dashboard or Wrong password`,
-      );
+      throw new CustomException(HttpStatus.FORBIDDEN, `Wrong password`);
 
     return foundDashboard;
   }
