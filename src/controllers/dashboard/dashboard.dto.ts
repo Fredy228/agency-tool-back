@@ -4,4 +4,5 @@ export class DashboardDto {
   textOne: string;
   textTwo: string;
   textThree: string;
+  screenUrl: string;
 }

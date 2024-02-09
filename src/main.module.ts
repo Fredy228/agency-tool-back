@@ -14,12 +14,13 @@ import { DashboardModule } from './controllers/dashboard/dashboard.module';
     JwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '3d' },
+      signOptions: { expiresIn: '7d' },
     }),
     AuthModule,
     UserModule,
     OrganizationModule,
     DashboardModule,
   ],
+  providers: [],
 })
 export class MainModule {}

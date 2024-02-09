@@ -74,6 +74,14 @@ export class UserDevices {
   })
   createAt: Date;
 
+  @Column({
+    name: 'updateAt',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
+  updateAt: Date;
+
   @Column({ type: 'varchar', length: 250, nullable: false })
   accessToken: string;
 
