@@ -16,18 +16,24 @@ export class ProtectRefreshMiddleware implements NestMiddleware {
   ) {}
 
   async use(
-    req: Request & { user?: User; currentDevice: UserDevices },
+    req: Request & {
+      user?: User;
+      currentDevice: UserDevices;
+    },
     _: Response,
     next: NextFunction,
   ) {
-    const token =
-      req.headers.authorization?.startsWith('Bearer') &&
-      req.headers.authorization.split(' ')[1];
+    const token = req.cookies.refreshToken;
 
     if (!token)
       throw new CustomException(HttpStatus.UNAUTHORIZED, 'Not authorized');
 
-    const decodedToken = await this.jwtService.verify(token);
+    let decodedToken: { id: any };
+    try {
+      decodedToken = await this.jwtService.verify(token);
+    } catch (error) {
+      throw new CustomException(HttpStatus.UNAUTHORIZED, 'Not authorized');
+    }
 
     const currentUser = await this.usersRepository.findOne({
       where: { id: decodedToken.id },

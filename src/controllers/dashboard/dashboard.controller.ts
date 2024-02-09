@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -18,7 +19,10 @@ import { ImageValidatorPipe } from '../../pipe/validator-img.pipe';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { Request } from 'express';
 import { User } from '../../entity/user.entity';
-import { dashboardCreateSchema } from '../../joi-schema/dashboardSchema';
+import {
+  dashboardCreateSchema,
+  dashboardUpdateSchema,
+} from '../../joi-schema/dashboardSchema';
 import { DashboardDto } from './dashboard.dto';
 import { Dashboard } from '../../entity/dashboard.entity';
 
@@ -33,10 +37,7 @@ export class DashboardController {
     new ImageValidatorPipe({ maxSize: 5 }),
   )
   @UseInterceptors(
-    FileFieldsInterceptor([
-      { name: 'logoPartner', maxCount: 1 },
-      { name: 'imageScreen', maxCount: 1 },
-    ]),
+    FileFieldsInterceptor([{ name: 'logoPartner', maxCount: 1 }]),
   )
   async create(
     @Req() req: Request & { user: User },
@@ -46,7 +47,6 @@ export class DashboardController {
     },
     @Body() body: DashboardDto,
   ) {
-    console.log('body', body);
     return this.dashboardService.createDashboard(req.user, body);
   }
 
@@ -77,5 +77,30 @@ export class DashboardController {
     @Req() req: Request & { user: User },
   ) {
     return this.dashboardService.deleteDashboard(req.user, Number(idDashb));
+  }
+
+  @Patch('/:idDashboard')
+  @HttpCode(204)
+  @UsePipes(
+    new BodyValidationPipe(dashboardUpdateSchema),
+    new ImageValidatorPipe({ maxSize: 5 }),
+  )
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'logoPartner', maxCount: 1 }]),
+  )
+  async update(
+    @Param('idDashboard') idDashb: string,
+    @Req() req: Request & { user: User },
+    @UploadedFiles()
+    files: {
+      logoPartner?: Array<Express.Multer.File>;
+    },
+    @Body() body: Partial<DashboardDto>,
+  ) {
+    return this.dashboardService.updateDashboard(
+      req.user,
+      Number(idDashb),
+      body,
+    );
   }
 }

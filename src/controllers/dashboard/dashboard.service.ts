@@ -34,16 +34,19 @@ export class DashboardService {
 
     const encrypt = encryptionData(body.password);
 
-    const newOrg = this.dashboardRepository.create({
+    if (!encrypt)
+      throw new CustomException(HttpStatus.BAD_REQUEST, `Error encrypt pass`);
+
+    const newDashb = this.dashboardRepository.create({
       ...body,
       password: encrypt,
       orgId: foundOrg,
     });
-    await this.dashboardRepository.save(newOrg);
+    await this.dashboardRepository.save(newDashb);
 
-    newOrg.password = undefined;
+    newDashb.password = undefined;
 
-    return newOrg;
+    return newDashb;
   }
 
   async getDashboards(user: User): Promise<Dashboard[]> {
@@ -86,8 +89,16 @@ export class DashboardService {
     if (!foundDashboard)
       throw new CustomException(HttpStatus.NOT_FOUND, `Not found dashboard`);
 
-    if (user && foundDashboard.orgId.userId.id === user.id)
+    if (user && foundDashboard.orgId.userId.id === user.id) {
+      const passDecrypt = decryptionData(foundDashboard.password);
+      if (!passDecrypt)
+        throw new CustomException(
+          HttpStatus.BAD_REQUEST,
+          `Error decrypt password`,
+        );
+      foundDashboard.password = passDecrypt;
       return foundDashboard;
+    }
 
     if (!password)
       throw new CustomException(HttpStatus.BAD_REQUEST, `No password entered`);
@@ -96,6 +107,9 @@ export class DashboardService {
 
     if (decryptPass !== password)
       throw new CustomException(HttpStatus.FORBIDDEN, `Wrong password`);
+
+    if (!user || foundDashboard.orgId.userId.id !== user.id)
+      foundDashboard.password = undefined;
 
     return foundDashboard;
   }
@@ -117,5 +131,45 @@ export class DashboardService {
       throw new CustomException(HttpStatus.NOT_FOUND, `Not found dashboard`);
 
     return await this.dashboardRepository.delete(foundDashboard.id);
+  }
+
+  async updateDashboard(
+    user: User,
+    idDashb: number,
+    body: Partial<DashboardDto>,
+  ) {
+    const foundDashboard = await this.dashboardRepository.findOne({
+      where: { id: idDashb, orgId: { userId: user } },
+    });
+
+    if (!foundDashboard)
+      throw new CustomException(HttpStatus.NOT_FOUND, `Not found dashboard`);
+
+    if (Object.keys(body).length === 0) return;
+
+    let encrypt = undefined;
+
+    if (body.password) encrypt = encryptionData(body.password);
+
+    return this.entityManager.transaction(
+      async (transactionalEntityManager) => {
+        await transactionalEntityManager
+          .getRepository(Dashboard)
+          .createQueryBuilder()
+          .update(Dashboard)
+          .set({
+            textOne: body?.textOne,
+            textTwo: body?.textTwo,
+            textThree: body?.textThree,
+            screenUrl: body?.screenUrl,
+            name: body?.name,
+            password: encrypt,
+          })
+          .where('id = :id', { id: foundDashboard.id })
+          .execute();
+
+        return;
+      },
+    );
   }
 }

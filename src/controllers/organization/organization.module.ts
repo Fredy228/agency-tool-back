@@ -5,11 +5,12 @@ import { Organization } from '../../entity/organization.entity';
 import { OrganizationController } from './organization.controller';
 import { OrganizationService } from './organization.service';
 import { User } from '../../entity/user.entity';
+import { AuthMiddlewareService } from '../../services/auth-middleware.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Organization, User])],
   controllers: [OrganizationController],
-  providers: [OrganizationService],
+  providers: [OrganizationService, AuthMiddlewareService],
 })
 export class OrganizationModule {
   configure(consumer: MiddlewareConsumer) {

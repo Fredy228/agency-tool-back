@@ -7,11 +7,12 @@ import { Dashboard } from '../../entity/dashboard.entity';
 import { DashboardController } from './dashboard.controller';
 import { DashboardService } from './dashboard.service';
 import { CheckUserMiddleware } from '../../middlewares/check-user.middleware';
+import { AuthMiddlewareService } from '../../services/auth-middleware.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Organization, User, Dashboard])],
   controllers: [DashboardController],
-  providers: [DashboardService],
+  providers: [DashboardService, AuthMiddlewareService],
 })
 export class DashboardModule {
   configure(consumer: MiddlewareConsumer) {
@@ -27,6 +28,10 @@ export class DashboardModule {
       {
         path: '/api/dashboard/:idDashboard',
         method: RequestMethod.DELETE,
+      },
+      {
+        path: '/api/dashboard/:idDashboard',
+        method: RequestMethod.PATCH,
       },
     );
 
