@@ -24,6 +24,7 @@ import { userCreateSchema } from '../../joi-schema/userSchema';
 import { User, UserDevices } from '../../entity/user.entity';
 
 const CLIENT_URL = process.env.CLIENT_URL;
+const MAX_AGE = 7 * 24 * 60 * 60 * 1000;
 
 @Controller('api/auth')
 export class AuthController {
@@ -45,7 +46,7 @@ export class AuthController {
     });
     res.cookie('refreshToken', createdUser.refreshToken, {
       httpOnly: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: MAX_AGE,
     });
     return createdUser;
   }
@@ -66,7 +67,7 @@ export class AuthController {
     console.log('toooken', foundUser.refreshToken);
     res.cookie('refreshToken', foundUser.refreshToken, {
       httpOnly: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: MAX_AGE,
     });
     return foundUser;
   }
@@ -94,7 +95,7 @@ export class AuthController {
 
     res.cookie('refreshToken', foundUser.refreshToken, {
       httpOnly: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: MAX_AGE,
     });
     res.redirect(`${CLIENT_URL}/welcome?token=${foundUser.accessToken}`);
   }
@@ -115,7 +116,7 @@ export class AuthController {
     );
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: MAX_AGE,
     });
     return tokens;
   }
