@@ -83,6 +83,7 @@ export class DashboardService {
         orgId: {
           userId: true,
         },
+        links: true,
       },
     });
 

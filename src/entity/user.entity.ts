@@ -1,6 +1,7 @@
 import {
   Column,
   Entity,
+  Index,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -12,9 +13,11 @@ import { PlanEnum } from '../enum/plan-enum';
 @Entity({ name: 'user' })
 @Unique(['email'])
 export class User {
+  @Index()
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Index()
   @Column({ type: 'varchar', length: 100, nullable: false })
   email: string;
 
@@ -52,6 +55,14 @@ export class User {
   })
   createAt: Date;
 
+  @Column({
+    name: 'updateAt',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
+  updateAt: Date;
+
   @OneToMany(() => UserDevices, (device) => device.userId)
   devices: UserDevices[];
 
@@ -60,6 +71,7 @@ export class User {
 }
 
 @Entity({ name: 'user_devices' })
+@Index(['id', 'userId'])
 export class UserDevices {
   @PrimaryGeneratedColumn()
   id: number;

@@ -13,13 +13,9 @@ export class UserService {
     private readonly entityManager: EntityManager,
   ) {}
 
-  async getUser(
-    user: User,
-    currentDevice: UserDevices,
-  ): Promise<User & { currentDevice: UserDevices }> {
+  async getUser(user: User): Promise<User> {
     user.password = undefined;
-    user.devices = undefined;
 
-    return { ...user, currentDevice };
+    return user;
   }
 }

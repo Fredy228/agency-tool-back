@@ -1,8 +1,17 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Organization } from './organization.entity';
+import { Link } from './link.entity';
 
 @Entity({ name: 'dashboard' })
 export class Dashboard {
+  @Index()
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -19,6 +28,14 @@ export class Dashboard {
     default: () => 'CURRENT_TIMESTAMP',
   })
   createAt: Date;
+
+  @Column({
+    name: 'updateAt',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
+  updateAt: Date;
 
   @Column({ type: 'varchar', length: 250, nullable: false })
   password: string;
@@ -47,8 +64,12 @@ export class Dashboard {
     color_second: string;
   };
 
+  @Index()
   @ManyToOne(() => Organization, (org) => org.dashboards, {
     onDelete: 'CASCADE',
   })
   orgId: Organization;
+
+  @OneToMany(() => Link, (link) => link.dashbId)
+  links: Link[];
 }

@@ -7,6 +7,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { UserModule } from './controllers/user/user.module';
 import { OrganizationModule } from './controllers/organization/organization.module';
 import { DashboardModule } from './controllers/dashboard/dashboard.module';
+import { LinkModule } from './controllers/link/link.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { DashboardModule } from './controllers/dashboard/dashboard.module';
     UserModule,
     OrganizationModule,
     DashboardModule,
+    LinkModule,
   ],
   providers: [],
 })
