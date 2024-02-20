@@ -9,15 +9,17 @@ import {
 } from 'typeorm';
 import { Organization } from './organization.entity';
 import { PlanEnum } from '../enum/plan-enum';
+import { JsonTransformer } from '@anchan828/typeorm-transformers';
+import { UserSettingsType } from '../types/user-types';
 
 @Entity({ name: 'user' })
 @Unique(['email'])
 export class User {
-  @Index()
+  @Index('idx_user_id')
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Index()
+  @Index('idx_user_email')
   @Column({ type: 'varchar', length: 100, nullable: false })
   email: string;
 
@@ -40,13 +42,16 @@ export class User {
   verified: number;
 
   @Column({
-    type: 'simple-json',
-    default: null,
+    type: 'varchar',
+    width: 255,
+    nullable: true,
+    transformer: new JsonTransformer<UserSettingsType>({
+      restorePassAt: null,
+      plan: PlanEnum.FREE,
+      code: null,
+    }),
   })
-  settings: {
-    restorePassAt: Date | null;
-    plan: PlanEnum;
-  };
+  settings: UserSettingsType;
 
   @Column({
     name: 'createAt',
@@ -71,8 +76,8 @@ export class User {
 }
 
 @Entity({ name: 'user_devices' })
-@Index(['id', 'userId'])
 export class UserDevices {
+  @Index('idx_devices_id')
   @PrimaryGeneratedColumn()
   id: number;
 

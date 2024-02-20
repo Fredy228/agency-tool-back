@@ -8,10 +8,11 @@ import {
 } from 'typeorm';
 import { Organization } from './organization.entity';
 import { Link } from './link.entity';
+import { Collection } from './collection.entity';
 
 @Entity({ name: 'dashboard' })
 export class Dashboard {
-  @Index()
+  @Index('idx_dashboard_id')
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -64,7 +65,6 @@ export class Dashboard {
     color_second: string;
   };
 
-  @Index()
   @ManyToOne(() => Organization, (org) => org.dashboards, {
     onDelete: 'CASCADE',
   })
@@ -72,4 +72,7 @@ export class Dashboard {
 
   @OneToMany(() => Link, (link) => link.dashbId)
   links: Link[];
+
+  @OneToMany(() => Collection, (collection) => collection.dashbId)
+  collections: Collection[];
 }

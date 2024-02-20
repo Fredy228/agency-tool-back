@@ -20,7 +20,7 @@ import { LoginAuthDto, RegisterAuthDto } from './auth.dto';
 import { AuthService } from './auth.service';
 
 import { BodyValidationPipe } from '../../pipe/validator-body.pipe';
-import { userCreateSchema } from '../../joi-schema/userSchema';
+import { userCodeSchema, userCreateSchema } from '../../joi-schema/userSchema';
 import { User, UserDevices } from '../../entity/user.entity';
 
 const CLIENT_URL = process.env.CLIENT_URL;
@@ -127,5 +127,21 @@ export class AuthController {
     @Req() req: Request & { user: User; currentDevice: UserDevices },
   ) {
     return this.authService.logout(req.currentDevice);
+  }
+
+  @Get('/verification')
+  @HttpCode(204)
+  async sendVerificationCode(@Req() req: Request & { user: User }) {
+    return this.authService.sendVerificationCode(req.user);
+  }
+
+  @Post('/verification')
+  @HttpCode(204)
+  @UsePipes(new BodyValidationPipe(userCodeSchema))
+  async checkVerificationCode(
+    @Req() req: Request & { user: User },
+    @Body() body: { code: string },
+  ) {
+    return this.authService.checkVerificationCode(req.user, body.code);
   }
 }

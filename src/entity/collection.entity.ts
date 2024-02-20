@@ -3,15 +3,14 @@ import {
   Entity,
   Index,
   ManyToOne,
-  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { User } from './user.entity';
 import { Dashboard } from './dashboard.entity';
+import { CollectionDetail } from '../types/collection-links';
 
-@Entity({ name: 'organization' })
-export class Organization {
-  @Index('idx_organization_id')
+@Entity({ name: 'collection' })
+export class Collection {
+  @Index('idx_collection_id')
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -37,18 +36,17 @@ export class Organization {
   })
   updateAt: Date;
 
-  @Column({ type: 'varchar', length: 250, nullable: true })
-  logoUrl: string;
+  @Column({ type: 'varchar', length: 100, nullable: false })
+  image: string;
 
   @Column({
     type: 'simple-array',
     default: null,
   })
-  customScreens: string[];
+  detail: CollectionDetail;
 
-  @ManyToOne(() => User, (user) => user.organizations, { onDelete: 'CASCADE' })
-  userId: User;
-
-  @OneToMany(() => Dashboard, (dashboard) => dashboard.orgId)
-  dashboards: Dashboard[];
+  @ManyToOne(() => Dashboard, (dashb) => dashb.collections, {
+    onDelete: 'CASCADE',
+  })
+  dashbId: Dashboard;
 }

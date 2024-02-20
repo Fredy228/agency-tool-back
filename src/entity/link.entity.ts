@@ -9,7 +9,7 @@ import { Dashboard } from './dashboard.entity';
 
 @Entity({ name: 'link' })
 export class Link {
-  @Index()
+  @Index('idx_link_id')
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -44,7 +44,6 @@ export class Link {
   @Column({ type: 'varchar', length: 100, nullable: false })
   description: string;
 
-  @Index()
   @ManyToOne(() => Dashboard, (dashb) => dashb.links, {
     onDelete: 'CASCADE',
   })

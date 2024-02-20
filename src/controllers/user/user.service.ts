@@ -15,6 +15,7 @@ export class UserService {
 
   async getUser(user: User): Promise<User> {
     user.password = undefined;
+    user.settings.code = null;
 
     return user;
   }

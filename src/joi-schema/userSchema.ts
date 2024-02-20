@@ -24,3 +24,13 @@ export const userCreateSchema = Joi.object()
       }),
   })
   .options({ stripUnknown: true });
+
+export const userCodeSchema = Joi.object()
+  .keys({
+    code: Joi.string().min(1).max(10).required().messages({
+      'string.empty': 'name|The name is empty.',
+      'string.min': 'name|The name cannot be less than 1 characters',
+      'string.max': 'name|The name cannot be more than 10 characters',
+    }),
+  })
+  .options({ stripUnknown: true });

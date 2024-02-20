@@ -9,6 +9,7 @@ import { ProtectRefreshMiddleware } from '../../middlewares/protect-refresh.midd
 import { UserAgentMiddleware } from '../../middlewares/user-agent.middleware';
 import { GoogleStrategy } from './google.strategy';
 import { AuthMiddlewareService } from '../../services/auth-middleware.service';
+import { ProtectAuthMiddleware } from '../../middlewares/protect-auth.middleware';
 
 @Module({
   imports: [
@@ -32,6 +33,17 @@ export class AuthModule {
       {
         path: '/api/auth/logout',
         method: RequestMethod.GET,
+      },
+    );
+
+    consumer.apply(ProtectAuthMiddleware).forRoutes(
+      {
+        path: '/api/auth/verification',
+        method: RequestMethod.GET,
+      },
+      {
+        path: '/api/auth/verification',
+        method: RequestMethod.POST,
       },
     );
 

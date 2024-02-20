@@ -2,6 +2,7 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
+import { MailerService } from '@nestjs-modules/mailer';
 import { v4 as uuidv4 } from 'uuid';
 import { Details } from 'express-useragent';
 
@@ -10,6 +11,8 @@ import { LoginAuthDto, RegisterAuthDto } from './auth.dto';
 import { TokenType } from '../../types/token-type';
 import { CustomException } from '../../services/custom-exception';
 import { checkPassword, hashPassword } from '../../services/hashPassword';
+import { PlanEnum } from '../../enum/plan-enum';
+import * as process from 'process';
 
 @Injectable()
 export class AuthService {
@@ -20,6 +23,7 @@ export class AuthService {
     @InjectRepository(UserDevices)
     private devicesRepository: Repository<UserDevices>,
     private jwtService: JwtService,
+    private readonly mailerService: MailerService,
     private readonly entityManager: EntityManager,
   ) {}
 
@@ -80,6 +84,11 @@ export class AuthService {
       email,
       password: hashPass,
       firstName: name,
+      settings: {
+        plan: PlanEnum.FREE,
+        code: null,
+        restorePassAt: null,
+      },
     });
     await this.usersRepository.save(newUser);
 
@@ -112,6 +121,11 @@ export class AuthService {
       const newUser = this.usersRepository.create({
         ...user,
         password: hashPass,
+        settings: {
+          plan: PlanEnum.FREE,
+          code: null,
+          restorePassAt: null,
+        },
       });
 
       await this.usersRepository.save(newUser);
@@ -204,5 +218,78 @@ export class AuthService {
     const accessToken = this.jwtService.sign(payload, { expiresIn: '45m' });
     const refreshToken = this.jwtService.sign(payload);
     return { accessToken, refreshToken };
+  }
+
+  async sendVerificationCode(user: User): Promise<void> {
+    const randomCode = Math.floor(100000 + Math.random() * 900000);
+
+    await this.entityManager.transaction(async (transactionalEntityManager) => {
+      const newTokens = this.createToken(user);
+
+      await transactionalEntityManager
+        .getRepository(User)
+        .createQueryBuilder()
+        .update(User)
+        .set({
+          settings: {
+            ...user.settings,
+            code: {
+              value: String(randomCode),
+              date: new Date(),
+            },
+          },
+        })
+        .where('id = :id', { id: user.id })
+        .execute();
+
+      return newTokens;
+    });
+
+    try {
+      await this.mailerService.sendMail({
+        from: process.env.SMTP_USER,
+        to: user.email,
+        subject: 'Verification AgencyTool',
+        template: 'code',
+        context: {
+          title: 'Verification email',
+          code: randomCode,
+        },
+      });
+    } catch (e) {
+      console.log('e', e);
+      throw new CustomException(HttpStatus.BAD_REQUEST, `Error send code`);
+    }
+    return;
+  }
+
+  async checkVerificationCode(user: User, code: string) {
+    if (new Date().getTime() - user.settings.code.date.getTime() > 600000)
+      throw new CustomException(HttpStatus.BAD_REQUEST, `Code expired`);
+
+    if (code !== user.settings.code.value)
+      throw new CustomException(HttpStatus.BAD_REQUEST, `Wrong code`);
+
+    return this.entityManager.transaction(
+      async (transactionalEntityManager) => {
+        const newTokens = this.createToken(user);
+
+        await transactionalEntityManager
+          .getRepository(User)
+          .createQueryBuilder()
+          .update(User)
+          .set({
+            settings: {
+              ...user.settings,
+              code: null,
+            },
+            verified: 1,
+          })
+          .where('id = :id', { id: user.id })
+          .execute();
+
+        return newTokens;
+      },
+    );
   }
 }
