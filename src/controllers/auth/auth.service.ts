@@ -220,12 +220,16 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  async sendVerificationCode(user: User): Promise<void> {
+  async createAndSetCode(user: User): Promise<string> {
+    if (new Date().getTime() - user.settings?.code?.date.getTime() < 60000)
+      throw new CustomException(
+        HttpStatus.TOO_MANY_REQUESTS,
+        `You can request a code no more than once a minute`,
+      );
+
     const randomCode = Math.floor(100000 + Math.random() * 900000);
 
     await this.entityManager.transaction(async (transactionalEntityManager) => {
-      const newTokens = this.createToken(user);
-
       await transactionalEntityManager
         .getRepository(User)
         .createQueryBuilder()
@@ -241,9 +245,19 @@ export class AuthService {
         })
         .where('id = :id', { id: user.id })
         .execute();
-
-      return newTokens;
     });
+
+    return String(randomCode);
+  }
+
+  async sendVerificationCode(user: User): Promise<void> {
+    if (user.verified)
+      throw new CustomException(
+        HttpStatus.I_AM_A_TEAPOT,
+        `You've already been verified.`,
+      );
+
+    const randomCode = await this.createAndSetCode(user);
 
     try {
       await this.mailerService.sendMail({
@@ -272,8 +286,6 @@ export class AuthService {
 
     return this.entityManager.transaction(
       async (transactionalEntityManager) => {
-        const newTokens = this.createToken(user);
-
         await transactionalEntityManager
           .getRepository(User)
           .createQueryBuilder()
@@ -287,8 +299,74 @@ export class AuthService {
           })
           .where('id = :id', { id: user.id })
           .execute();
+      },
+    );
+  }
 
-        return newTokens;
+  async sendForgotCode(email: string): Promise<void> {
+    const foundUser = await this.usersRepository.findOneBy({
+      email,
+    });
+
+    if (!foundUser)
+      throw new CustomException(
+        HttpStatus.NOT_FOUND,
+        `This email is not registered.`,
+      );
+
+    const randomCode = await this.createAndSetCode(foundUser);
+
+    try {
+      await this.mailerService.sendMail({
+        from: process.env.SMTP_USER,
+        to: email,
+        subject: 'Forgot pass AgencyTool',
+        template: 'code',
+        context: {
+          title: 'Reset password',
+          code: randomCode,
+        },
+      });
+    } catch (e) {
+      console.log('e', e);
+      throw new CustomException(HttpStatus.BAD_REQUEST, `Error send code`);
+    }
+    return;
+  }
+
+  async resetPassword(code: string, newPassword: string, email: string) {
+    const foundUser = await this.usersRepository.findOneBy({
+      email,
+    });
+
+    console.log('foundUser', foundUser);
+
+    if (!foundUser)
+      throw new CustomException(
+        HttpStatus.NOT_FOUND,
+        `
+      Not found user`,
+      );
+
+    if (new Date().getTime() - foundUser.settings.code.date.getTime() > 600000)
+      throw new CustomException(HttpStatus.BAD_REQUEST, `Code expired`);
+
+    if (code !== foundUser.settings.code.value)
+      throw new CustomException(HttpStatus.BAD_REQUEST, `Wrong code`);
+
+    const hashPass = await hashPassword(newPassword);
+
+    return this.entityManager.transaction(
+      async (transactionalEntityManager) => {
+        await transactionalEntityManager
+          .getRepository(User)
+          .createQueryBuilder()
+          .update(User)
+          .set({
+            password: hashPass,
+          })
+          .where('id = :id', { id: foundUser.id })
+          .execute();
       },
     );
   }

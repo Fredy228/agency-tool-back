@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   HttpCode,
+  Patch,
   Post,
   Req,
   Res,
@@ -20,7 +21,12 @@ import { LoginAuthDto, RegisterAuthDto } from './auth.dto';
 import { AuthService } from './auth.service';
 
 import { BodyValidationPipe } from '../../pipe/validator-body.pipe';
-import { userCodeSchema, userCreateSchema } from '../../joi-schema/userSchema';
+import {
+  userCodeSchema,
+  userCreateSchema,
+  userEmailSchema,
+  userPasswordSchema,
+} from '../../joi-schema/userSchema';
 import { User, UserDevices } from '../../entity/user.entity';
 
 const CLIENT_URL = process.env.CLIENT_URL;
@@ -143,5 +149,25 @@ export class AuthController {
     @Body() body: { code: string },
   ) {
     return this.authService.checkVerificationCode(req.user, body.code);
+  }
+
+  @Post('/forgot-pass')
+  @HttpCode(204)
+  @UsePipes(new BodyValidationPipe(userEmailSchema))
+  async sendForgotCode(@Body() body: { email: string }) {
+    return this.authService.sendForgotCode(body.email);
+  }
+
+  @Patch('/forgot-pass')
+  @HttpCode(204)
+  @UsePipes(
+    new BodyValidationPipe(userCodeSchema),
+    new BodyValidationPipe(userPasswordSchema),
+    new BodyValidationPipe(userEmailSchema),
+  )
+  async resetPassword(
+    @Body() body: { code: string; password: string; email: string },
+  ) {
+    return this.authService.resetPassword(body.code, body.password, body.email);
   }
 }
