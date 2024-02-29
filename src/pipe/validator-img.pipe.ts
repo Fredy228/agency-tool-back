@@ -31,7 +31,7 @@ export class ImageValidatorPipe implements PipeTransform {
             );
 
           if (
-            !['png', 'jpg', 'jpeg', 'webp', 'svg'].includes(
+            !['png', 'jpg', 'jpeg', 'webp', 'svg', 'svg+xml'].includes(
               item.mimetype.split('/')[1],
             )
           )

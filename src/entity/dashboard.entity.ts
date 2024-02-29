@@ -44,8 +44,8 @@ export class Dashboard {
   @Column({ type: 'varchar', length: 500, nullable: false })
   screenUrl: string;
 
-  @Column({ type: 'varchar', length: 250, nullable: true })
-  logoPartnerUrl: string;
+  @Column({ type: 'longblob', nullable: true })
+  logoPartnerUrl: Buffer | null;
 
   @Column({ type: 'varchar', length: 250, nullable: false })
   textOne: string;

@@ -9,6 +9,7 @@ import {
   UploadedFiles,
   UseInterceptors,
   UsePipes,
+  Delete,
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { Request } from 'express';
@@ -69,11 +70,20 @@ export class OrganizationController {
     files: {
       logo?: Array<Express.Multer.File>;
     },
-    @Body() { name }: OrganizationUpdateDto,
+    @Body() body: OrganizationUpdateDto,
   ) {
-    console.log('name', name);
-    console.log('logo', files?.logo);
+    console.log('body', body);
+    console.log('files', files);
+    return this.organizationService.updateOrganization(
+      req.user,
+      body.name,
+      files.logo ? files.logo[0] : null,
+    );
+  }
 
-    return this.organizationService.updateOrganization(req.user, name);
+  @Delete('/logo')
+  @HttpCode(204)
+  async deleteLogo(@Req() req: Request & { user: User }) {
+    return this.organizationService.deleteLogoOrg(req.user);
   }
 }

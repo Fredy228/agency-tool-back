@@ -36,14 +36,14 @@ export class Collection {
   })
   updateAt: Date;
 
-  @Column({ type: 'varchar', length: 100, nullable: false })
-  image: string;
+  @Column({ type: 'longblob', nullable: false })
+  image: Buffer;
 
   @Column({
     type: 'simple-array',
     default: null,
   })
-  detail: CollectionDetail;
+  detail: CollectionDetail | null;
 
   @ManyToOne(() => Dashboard, (dashb) => dashb.collections, {
     onDelete: 'CASCADE',

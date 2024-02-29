@@ -6,11 +6,12 @@ import { OrganizationController } from './organization.controller';
 import { OrganizationService } from './organization.service';
 import { User } from '../../entity/user.entity';
 import { AuthMiddlewareService } from '../../services/auth-middleware.service';
+import { ImageService } from '../../services/image.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Organization, User])],
   controllers: [OrganizationController],
-  providers: [OrganizationService, AuthMiddlewareService],
+  providers: [OrganizationService, AuthMiddlewareService, ImageService],
 })
 export class OrganizationModule {
   configure(consumer: MiddlewareConsumer) {
@@ -26,6 +27,10 @@ export class OrganizationModule {
       {
         path: '/api/organization',
         method: RequestMethod.PATCH,
+      },
+      {
+        path: '/api/organization/logo',
+        method: RequestMethod.DELETE,
       },
     );
   }

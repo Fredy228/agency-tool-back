@@ -37,8 +37,8 @@ export class Organization {
   })
   updateAt: Date;
 
-  @Column({ type: 'varchar', length: 250, nullable: true })
-  logoUrl: string;
+  @Column({ type: 'longblob', nullable: true })
+  logoUrl: Buffer | null;
 
   @Column({
     type: 'simple-array',

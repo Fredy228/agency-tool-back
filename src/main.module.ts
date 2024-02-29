@@ -12,6 +12,7 @@ import { UserModule } from './controllers/user/user.module';
 import { OrganizationModule } from './controllers/organization/organization.module';
 import { DashboardModule } from './controllers/dashboard/dashboard.module';
 import { LinkModule } from './controllers/link/link.module';
+import { CollectionModule } from './controllers/collection/collection.module';
 
 dotenv.config();
 
@@ -49,6 +50,7 @@ dotenv.config();
     OrganizationModule,
     DashboardModule,
     LinkModule,
+    CollectionModule,
   ],
   providers: [],
 })

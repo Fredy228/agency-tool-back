@@ -7,6 +7,7 @@ import { User } from '../../entity/user.entity';
 import { CustomException } from '../../services/custom-exception';
 import { DashboardDto } from './dashboard.dto';
 import { decryptionData, encryptionData } from '../../services/encryption-data';
+import { ImageService } from '../../services/image.service';
 
 @Injectable()
 export class DashboardService {
@@ -16,9 +17,14 @@ export class DashboardService {
     @InjectRepository(Organization)
     private organizationRepository: Repository<Organization>,
     private readonly entityManager: EntityManager,
+    private readonly imageService: ImageService,
   ) {}
 
-  async createDashboard(user: User, body: DashboardDto) {
+  async createDashboard(
+    user: User,
+    body: DashboardDto,
+    logoImg: Express.Multer.File | null,
+  ) {
     const foundOrg = await this.organizationRepository.findOne({
       where: { userId: user },
       relations: {
@@ -32,6 +38,16 @@ export class DashboardService {
         `Your Dashboards limit is 6.`,
       );
 
+    let image = null;
+
+    if (logoImg) {
+      image = await this.imageService.optimize(logoImg, {
+        width: 460,
+        height: 80,
+        fit: 'inside',
+      });
+    }
+
     const encrypt = encryptionData(body.password);
 
     if (!encrypt)
@@ -41,6 +57,7 @@ export class DashboardService {
       ...body,
       password: encrypt,
       orgId: foundOrg,
+      logoPartnerUrl: image,
     });
     await this.dashboardRepository.save(newDashb);
 
@@ -79,18 +96,22 @@ export class DashboardService {
   ): Promise<Dashboard> {
     const foundDashboard = await this.dashboardRepository.findOne({
       where: { id },
-      relations: {
+      relations: ['orgId', 'orgId.userId'],
+      select: {
         orgId: {
-          userId: true,
+          id: true,
+          logoUrl: true,
+          userId: {
+            id: true,
+          },
         },
-        links: true,
       },
     });
 
     if (!foundDashboard)
       throw new CustomException(HttpStatus.NOT_FOUND, `Not found dashboard`);
 
-    if (user && foundDashboard.orgId.userId.id === user.id) {
+    if (user && foundDashboard.orgId?.userId?.id === user.id) {
       const passDecrypt = decryptionData(foundDashboard.password);
       if (!passDecrypt)
         throw new CustomException(
@@ -138,6 +159,7 @@ export class DashboardService {
     user: User,
     idDashb: number,
     body: Partial<DashboardDto>,
+    logoImg: Express.Multer.File | null,
   ) {
     const foundDashboard = await this.dashboardRepository.findOne({
       where: { id: idDashb, orgId: { userId: user } },
@@ -146,7 +168,21 @@ export class DashboardService {
     if (!foundDashboard)
       throw new CustomException(HttpStatus.NOT_FOUND, `Not found dashboard`);
 
-    if (Object.keys(body).length === 0) return;
+    if (Object.keys(body).length === 0 && !logoImg) return;
+
+    let image = undefined;
+
+    if (logoImg) {
+      console.log('sharp');
+      image = await this.imageService.optimize(logoImg, {
+        width: 460,
+        height: 80,
+        fit: 'inside',
+      });
+    }
+
+    console.log('logoImg', logoImg);
+    console.log('image', image);
 
     let encrypt = undefined;
 
@@ -165,6 +201,40 @@ export class DashboardService {
             screenUrl: body?.screenUrl,
             name: body?.name,
             password: encrypt,
+            logoPartnerUrl: image,
+          })
+          .where('id = :id', { id: foundDashboard.id })
+          .execute();
+
+        return;
+      },
+    );
+  }
+
+  async deleteLogoPartner(user: User, idDash: number) {
+    if (!idDash)
+      throw new CustomException(HttpStatus.BAD_REQUEST, `Incorrect id`);
+
+    const foundDashboard = await this.dashboardRepository.findOne({
+      where: {
+        id: idDash,
+        orgId: {
+          userId: user,
+        },
+      },
+    });
+
+    if (!foundDashboard)
+      throw new CustomException(HttpStatus.NOT_FOUND, `Not found dashboard`);
+
+    return this.entityManager.transaction(
+      async (transactionalEntityManager) => {
+        await transactionalEntityManager
+          .getRepository(Dashboard)
+          .createQueryBuilder()
+          .update(Dashboard)
+          .set({
+            logoPartnerUrl: null,
           })
           .where('id = :id', { id: foundDashboard.id })
           .execute();

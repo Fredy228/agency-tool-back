@@ -8,11 +8,12 @@ import { DashboardController } from './dashboard.controller';
 import { DashboardService } from './dashboard.service';
 import { CheckUserMiddleware } from '../../middlewares/check-user.middleware';
 import { AuthMiddlewareService } from '../../services/auth-middleware.service';
+import { ImageService } from '../../services/image.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Organization, User, Dashboard])],
   controllers: [DashboardController],
-  providers: [DashboardService, AuthMiddlewareService],
+  providers: [DashboardService, AuthMiddlewareService, ImageService],
 })
 export class DashboardModule {
   configure(consumer: MiddlewareConsumer) {
@@ -32,6 +33,10 @@ export class DashboardModule {
       {
         path: '/api/dashboard/:idDashboard',
         method: RequestMethod.PATCH,
+      },
+      {
+        path: '/api/dashboard/logo/:idDashboard',
+        method: RequestMethod.DELETE,
       },
     );
 

@@ -47,7 +47,11 @@ export class DashboardController {
     },
     @Body() body: DashboardDto,
   ) {
-    return this.dashboardService.createDashboard(req.user, body);
+    return this.dashboardService.createDashboard(
+      req.user,
+      body,
+      files?.logoPartner[0],
+    );
   }
 
   @Get('/')
@@ -101,6 +105,16 @@ export class DashboardController {
       req.user,
       Number(idDashb),
       body,
+      files?.logoPartner[0],
     );
+  }
+
+  @Delete('/logo/:idDashboard')
+  @HttpCode(204)
+  async deleteLogoPartner(
+    @Param('idDashboard') idDashb: string,
+    @Req() req: Request & { user: User },
+  ) {
+    return this.dashboardService.deleteLogoPartner(req.user, Number(idDashb));
   }
 }
