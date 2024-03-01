@@ -96,7 +96,7 @@ export class DashboardService {
   ): Promise<Dashboard> {
     const foundDashboard = await this.dashboardRepository.findOne({
       where: { id },
-      relations: ['orgId', 'orgId.userId'],
+      relations: ['orgId', 'orgId.userId', 'links'],
       select: {
         orgId: {
           id: true,
