@@ -20,8 +20,6 @@ export class OrganizationService {
     name: string,
     logoImg: Express.Multer.File | null,
   ): Promise<Organization> {
-    console.log('logoImg', logoImg);
-
     const foundOrg = await this.organizationRepository.findOneBy({
       userId: user,
     });

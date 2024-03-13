@@ -1,6 +1,6 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Organization } from '../../entity/organization.entity';
+import { CustomScreen, Organization } from '../../entity/organization.entity';
 import { EntityManager, Repository } from 'typeorm';
 import { Dashboard } from '../../entity/dashboard.entity';
 import { User } from '../../entity/user.entity';
@@ -8,12 +8,17 @@ import { CustomException } from '../../services/custom-exception';
 import { DashboardDto } from './dashboard.dto';
 import { decryptionData, encryptionData } from '../../services/encryption-data';
 import { ImageService } from '../../services/image.service';
+import { ScreenDashboard } from '../../entity/screens.entity';
 
 @Injectable()
 export class DashboardService {
   constructor(
     @InjectRepository(Dashboard)
     private dashboardRepository: Repository<Dashboard>,
+    @InjectRepository(ScreenDashboard)
+    private screenDashbRepository: Repository<ScreenDashboard>,
+    @InjectRepository(CustomScreen)
+    private customScreenRepository: Repository<CustomScreen>,
     @InjectRepository(Organization)
     private organizationRepository: Repository<Organization>,
     private readonly entityManager: EntityManager,
@@ -30,6 +35,11 @@ export class DashboardService {
       relations: {
         dashboards: true,
       },
+      select: {
+        dashboards: {
+          id: true,
+        },
+      },
     });
 
     if (foundOrg.dashboards.length >= 6)
@@ -37,6 +47,20 @@ export class DashboardService {
         HttpStatus.BAD_REQUEST,
         `Your Dashboards limit is 6.`,
       );
+
+    let customScreen = null;
+
+    if (Number(body.screenUrl)) {
+      customScreen = await this.customScreenRepository.findOneBy({
+        id: Number(body.screenUrl),
+      });
+
+      if (!customScreen)
+        throw new CustomException(
+          HttpStatus.NOT_FOUND,
+          `Selected screen not found`,
+        );
+    }
 
     let image = null;
 
@@ -53,40 +77,66 @@ export class DashboardService {
     if (!encrypt)
       throw new CustomException(HttpStatus.BAD_REQUEST, `Error encrypt pass`);
 
-    const newDashb = this.dashboardRepository.create({
-      ...body,
-      password: encrypt,
-      orgId: foundOrg,
-      logoPartnerUrl: image,
+    return this.entityManager.transaction(async () => {
+      const newDashb = this.dashboardRepository.create({
+        ...body,
+        password: encrypt,
+        orgId: foundOrg,
+        logoPartnerUrl: image,
+      });
+
+      await this.dashboardRepository.save(newDashb);
+
+      if (customScreen) {
+        const newScreen = this.screenDashbRepository.create({
+          screen: customScreen,
+          dashboard: newDashb,
+        });
+
+        await this.screenDashbRepository.save(newScreen);
+
+        newDashb.screenBuffer.screen = customScreen;
+      }
+
+      newDashb.password = undefined;
+
+      return newDashb;
     });
-    await this.dashboardRepository.save(newDashb);
-
-    newDashb.password = undefined;
-
-    return newDashb;
   }
 
   async getDashboards(user: User): Promise<Dashboard[]> {
-    const foundOrg = await this.organizationRepository.findOneBy({
-      userId: user,
-    });
-
-    if (!foundOrg)
-      throw new CustomException(
-        HttpStatus.NOT_FOUND,
-        `The organization was not found`,
-      );
-
-    return await this.dashboardRepository.find({
+    const dashboards = await this.dashboardRepository.find({
+      where: {
+        orgId: {
+          userId: user,
+        },
+      },
+      relations: {
+        screenBuffer: {
+          screen: true,
+        },
+      },
       select: {
         id: true,
         name: true,
         screenUrl: true,
-      },
-      where: {
-        orgId: foundOrg,
+        screenBuffer: {
+          id: true,
+          screen: {
+            id: true,
+            buffer: true,
+          },
+        },
       },
     });
+
+    if (!dashboards)
+      throw new CustomException(
+        HttpStatus.NOT_FOUND,
+        `The dashboards was not found`,
+      );
+
+    return dashboards;
   }
 
   async getOneDashboard(
@@ -96,13 +146,41 @@ export class DashboardService {
   ): Promise<Dashboard> {
     const foundDashboard = await this.dashboardRepository.findOne({
       where: { id },
-      relations: ['orgId', 'orgId.userId', 'links'],
+      relations: {
+        orgId: {
+          userId: true,
+        },
+        links: true,
+        collections: true,
+        screenBuffer: {
+          screen: true,
+        },
+      },
       select: {
+        collections: {
+          id: true,
+          image: true,
+          name: true,
+        },
+        links: {
+          id: true,
+          name: true,
+          image: true,
+          description: true,
+          url: true,
+        },
         orgId: {
           id: true,
           logoUrl: true,
           userId: {
             id: true,
+          },
+        },
+        screenBuffer: {
+          id: true,
+          screen: {
+            id: true,
+            buffer: true,
           },
         },
       },
@@ -170,26 +248,67 @@ export class DashboardService {
 
     if (Object.keys(body).length === 0 && !logoImg) return;
 
-    let image = undefined;
-
-    if (logoImg) {
-      console.log('sharp');
-      image = await this.imageService.optimize(logoImg, {
-        width: 460,
-        height: 80,
-        fit: 'inside',
-      });
-    }
-
-    console.log('logoImg', logoImg);
-    console.log('image', image);
-
-    let encrypt = undefined;
-
-    if (body.password) encrypt = encryptionData(body.password);
+    console.log('body', body);
 
     return this.entityManager.transaction(
       async (transactionalEntityManager) => {
+        let customScreen = null;
+        let screenDashboard: ScreenDashboard = null;
+
+        if (Number(body.screenUrl)) {
+          customScreen = await this.customScreenRepository.findOne({
+            where: {
+              id: Number(body.screenUrl),
+            },
+          });
+
+          if (!customScreen)
+            throw new CustomException(
+              HttpStatus.NOT_FOUND,
+              `Selected screen not found`,
+            );
+
+          if (Number(foundDashboard.screenUrl)) {
+            screenDashboard = await this.screenDashbRepository.findOneBy({
+              dashboard: foundDashboard,
+            });
+
+            if (!screenDashboard) {
+              const newScreen = this.screenDashbRepository.create({
+                screen: customScreen,
+                dashboard: foundDashboard,
+              });
+
+              await this.screenDashbRepository.save(newScreen);
+            } else {
+              await this.screenDashbRepository.update(screenDashboard, {
+                screen: customScreen,
+              });
+            }
+          } else {
+            const newScreen = this.screenDashbRepository.create({
+              screen: customScreen,
+              dashboard: foundDashboard,
+            });
+
+            await this.screenDashbRepository.save(newScreen);
+          }
+        }
+
+        let image = undefined;
+
+        if (logoImg) {
+          image = await this.imageService.optimize(logoImg, {
+            width: 460,
+            height: 80,
+            fit: 'inside',
+          });
+        }
+
+        let encrypt = undefined;
+
+        if (body.password) encrypt = encryptionData(body.password);
+
         await transactionalEntityManager
           .getRepository(Dashboard)
           .createQueryBuilder()

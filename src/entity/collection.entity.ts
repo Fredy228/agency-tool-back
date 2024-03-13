@@ -6,7 +6,6 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Dashboard } from './dashboard.entity';
-import { CollectionDetail } from '../types/collection-links';
 
 @Entity({ name: 'collection' })
 export class Collection {
@@ -36,14 +35,8 @@ export class Collection {
   })
   updateAt: Date;
 
-  @Column({ type: 'longblob', nullable: false })
-  image: Buffer;
-
-  @Column({
-    type: 'simple-array',
-    default: null,
-  })
-  detail: CollectionDetail | null;
+  @Column({ type: 'varchar', length: 250, nullable: false })
+  image: string;
 
   @ManyToOne(() => Dashboard, (dashb) => dashb.collections, {
     onDelete: 'CASCADE',

@@ -13,6 +13,7 @@ import { OrganizationModule } from './controllers/organization/organization.modu
 import { DashboardModule } from './controllers/dashboard/dashboard.module';
 import { LinkModule } from './controllers/link/link.module';
 import { CollectionModule } from './controllers/collection/collection.module';
+import { CustomScreensModule } from './controllers/custom-screens/custom-screens.module';
 
 dotenv.config();
 
@@ -51,6 +52,7 @@ dotenv.config();
     DashboardModule,
     LinkModule,
     CollectionModule,
+    CustomScreensModule,
   ],
   providers: [],
 })

@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { User } from './user.entity';
 import { Dashboard } from './dashboard.entity';
+import { ScreenDashboard } from './screens.entity';
 
 @Entity({ name: 'organization' })
 export class Organization {
@@ -40,15 +41,53 @@ export class Organization {
   @Column({ type: 'longblob', nullable: true })
   logoUrl: Buffer | null;
 
-  @Column({
-    type: 'simple-array',
-    default: null,
-  })
-  customScreens: string[];
+  @OneToMany(() => CustomScreen, (customScreen) => customScreen.orgId)
+  customScreens: CustomScreen[];
+
+  @OneToMany(
+    () => CollectionScreen,
+    (collectionScreen) => collectionScreen.orgId,
+  )
+  collectionScreens: CollectionScreen[];
 
   @ManyToOne(() => User, (user) => user.organizations, { onDelete: 'CASCADE' })
   userId: User;
 
   @OneToMany(() => Dashboard, (dashboard) => dashboard.orgId)
   dashboards: Dashboard[];
+}
+
+@Entity({ name: 'custom_screen' })
+export class CustomScreen {
+  @Index('idx_custom_screen_id')
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column({ type: 'longblob', nullable: false })
+  buffer: Buffer;
+
+  @ManyToOne(() => Organization, (org) => org.customScreens, {
+    onDelete: 'CASCADE',
+  })
+  orgId: Organization;
+
+  @OneToMany(() => ScreenDashboard, (screenDashb) => screenDashb.screen, {
+    onDelete: 'NO ACTION',
+  })
+  screensDashb: ScreenDashboard[];
+}
+
+@Entity({ name: 'collection_screen' })
+export class CollectionScreen {
+  @Index('idx_collection_screen_id')
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column({ type: 'longblob', nullable: false })
+  buffer: Buffer;
+
+  @ManyToOne(() => Organization, (org) => org.customScreens, {
+    onDelete: 'CASCADE',
+  })
+  orgId: Organization;
 }

@@ -2,13 +2,16 @@ import {
   Column,
   Entity,
   Index,
+  JoinColumn,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Organization } from './organization.entity';
+import { CustomScreen, Organization } from './organization.entity';
 import { Link } from './link.entity';
 import { Collection } from './collection.entity';
+import { ScreenDashboard } from './screens.entity';
 
 @Entity({ name: 'dashboard' })
 export class Dashboard {
@@ -75,4 +78,10 @@ export class Dashboard {
 
   @OneToMany(() => Collection, (collection) => collection.dashbId)
   collections: Collection[];
+
+  @OneToOne(() => ScreenDashboard, (screenDashb) => screenDashb.dashboard, {
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn()
+  screenBuffer: ScreenDashboard;
 }

@@ -6,7 +6,7 @@ import { Collection } from '../../entity/collection.entity';
 import { CollectionDto } from './collection.dto';
 import { User } from '../../entity/user.entity';
 import { CustomException } from '../../services/custom-exception';
-import { ImageService } from '../../services/image.service';
+import { decryptionData } from '../../services/encryption-data';
 
 @Injectable()
 export class CollectionService {
@@ -16,14 +16,12 @@ export class CollectionService {
     @InjectRepository(Collection)
     private collectionRepository: Repository<Collection>,
     private readonly entityManager: EntityManager,
-    private readonly imageService: ImageService,
   ) {}
 
   async createCollection(
     user: User,
-    { name }: CollectionDto,
+    { name, imageUrl }: CollectionDto,
     idDashb: number,
-    image: Express.Multer.File,
   ) {
     const foundDashboard = await this.dashboardRepository.findOne({
       where: {
@@ -32,8 +30,11 @@ export class CollectionService {
           userId: user,
         },
       },
-      relations: {
-        collections: true,
+      relations: ['collections'],
+      select: {
+        collections: {
+          id: true,
+        },
       },
     });
 
@@ -48,24 +49,111 @@ export class CollectionService {
         `Your Collections limit is 3.`,
       );
 
-    console.log('image', image);
-
-    const bufferImage = await this.imageService.optimize(image, {
-      width: 427,
-      height: 244,
-      fit: 'cover',
-    });
-
-    console.log('bufferImage', bufferImage);
-
     const newCollection = this.collectionRepository.create({
       name,
-      image: bufferImage,
+      image: imageUrl,
       dashbId: foundDashboard,
     });
 
     await this.collectionRepository.save(newCollection);
 
     return newCollection;
+  }
+
+  async getCollectionById(
+    user: User,
+    idCollection: number,
+    password: string | undefined,
+  ): Promise<Collection> {
+    const foundCollection = await this.collectionRepository.findOne({
+      relations: {
+        dashbId: {
+          orgId: {
+            userId: true,
+          },
+        },
+      },
+      select: {
+        dashbId: {
+          id: true,
+          password: true,
+          orgId: {
+            userId: {
+              id: true,
+            },
+          },
+        },
+      },
+      where: {
+        id: idCollection,
+      },
+    });
+
+    if (!foundCollection)
+      throw new CustomException(HttpStatus.NOT_FOUND, `Collection not found`);
+
+    if (user && foundCollection?.dashbId?.orgId?.userId?.id === user.id) {
+      foundCollection.dashbId = undefined;
+
+      return foundCollection;
+    }
+
+    if (!password)
+      throw new CustomException(HttpStatus.BAD_REQUEST, `No password entered`);
+
+    const decryptPass = decryptionData(foundCollection.dashbId.password);
+
+    if (decryptPass !== password)
+      throw new CustomException(HttpStatus.FORBIDDEN, `Wrong password`);
+
+    foundCollection.dashbId = undefined;
+
+    return foundCollection;
+  }
+
+  async updateCollection(user: User, id: number, body: Partial<CollectionDto>) {
+    const foundCollection = await this.collectionRepository.findOneBy({
+      id,
+      dashbId: {
+        orgId: {
+          userId: user,
+        },
+      },
+    });
+
+    if (!foundCollection)
+      throw new CustomException(HttpStatus.NOT_FOUND, `Collection not found`);
+
+    return this.entityManager.transaction(
+      async (transactionalEntityManager) => {
+        await transactionalEntityManager
+          .getRepository(Collection)
+          .createQueryBuilder()
+          .update(Collection)
+          .set({ ...body })
+          .where('id = :id', { id: foundCollection.id })
+          .execute();
+
+        return;
+      },
+    );
+  }
+
+  async deleteCollection(user: User, id: number): Promise<void> {
+    const foundCollection = await this.collectionRepository.findOneBy({
+      id,
+      dashbId: {
+        orgId: {
+          userId: user,
+        },
+      },
+    });
+
+    if (!foundCollection)
+      throw new CustomException(HttpStatus.NOT_FOUND, `Collection not found`);
+
+    await this.collectionRepository.delete(foundCollection);
+
+    return;
   }
 }

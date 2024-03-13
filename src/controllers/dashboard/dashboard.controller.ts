@@ -105,7 +105,7 @@ export class DashboardController {
       req.user,
       Number(idDashb),
       body,
-      files?.logoPartner[0],
+      files?.logoPartner ? files?.logoPartner[0] : null,
     );
   }
 

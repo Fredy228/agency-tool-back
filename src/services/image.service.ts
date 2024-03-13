@@ -8,7 +8,7 @@ export class ImageService {
     return await sharp(file.buffer)
       .resize(option)
       .toFormat('webp')
-      .webp({ quality: 95 })
+      .webp({ quality: 90 })
       .toBuffer();
   }
 }

@@ -1,18 +1,18 @@
 import {
   Body,
   Controller,
+  Delete,
+  Get,
   HttpCode,
   Param,
+  Patch,
   Post,
+  Query,
   Req,
-  UploadedFiles,
-  UseInterceptors,
   UsePipes,
 } from '@nestjs/common';
 import { CollectionService } from './collection.service';
 import { BodyValidationPipe } from '../../pipe/validator-body.pipe';
-import { ImageValidatorPipe } from '../../pipe/validator-img.pipe';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { Request } from 'express';
 import { User } from '../../entity/user.entity';
 import { CollectionDto } from './collection.dto';
@@ -24,25 +24,56 @@ export class CollectionController {
 
   @Post('/:idDashboard')
   @HttpCode(201)
-  @UsePipes(
-    new BodyValidationPipe(collectionCreateSchema),
-    new ImageValidatorPipe({ maxSize: 5 }),
-  )
-  @UseInterceptors(FileFieldsInterceptor([{ name: 'image', maxCount: 1 }]))
+  @UsePipes(new BodyValidationPipe(collectionCreateSchema))
   async create(
     @Param('idDashboard') idDashboard: string,
     @Req() req: Request & { user: User },
-    @UploadedFiles()
-    files: {
-      image?: Array<Express.Multer.File>;
-    },
     @Body() body: CollectionDto,
   ) {
     return this.collectionService.createCollection(
       req.user,
       body,
       Number(idDashboard),
-      files?.image[0],
+    );
+  }
+
+  @Patch('/:idCollection')
+  @HttpCode(204)
+  async update(
+    @Param('idCollection') idCollection: string,
+    @Req() req: Request & { user: User },
+    @Body() body: Partial<CollectionDto>,
+  ) {
+    return this.collectionService.updateCollection(
+      req.user,
+      Number(idCollection),
+      body,
+    );
+  }
+
+  @Get('/:idCollection')
+  @HttpCode(200)
+  async getById(
+    @Param('idCollection') idCollection: string,
+    @Query() query: { password: string },
+    @Req() req: Request & { user: User },
+  ) {
+    return this.collectionService.getCollectionById(
+      req.user,
+      Number(idCollection),
+      query.password,
+    );
+  }
+
+  @Delete('/:idCollection')
+  @HttpCode(204)
+  async delete(
+    @Param('idCollection') idCollection: string,
+    @Req() req: Request & { user: User },
+  ) {
+    return this.collectionService.deleteCollection(
+      req.user,
+      Number(idCollection),
     );
   }
 }
