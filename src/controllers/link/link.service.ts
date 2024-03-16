@@ -73,24 +73,14 @@ export class LinkService {
     if (!foundLink)
       throw new CustomException(HttpStatus.NOT_FOUND, `Link not found`);
 
-    return this.entityManager.transaction(
-      async (transactionalEntityManager) => {
-        await transactionalEntityManager
-          .getRepository(Link)
-          .createQueryBuilder()
-          .update(Link)
-          .set({
-            image: body.image,
-            name: body.name,
-            url: body.url,
-            description: body.description,
-          })
-          .where('id = :id', { id: foundLink.id })
-          .execute();
+    await this.linkRepository.update(foundLink, {
+      image: body.image,
+      name: body.name,
+      url: body.url,
+      description: body.description,
+    });
 
-        return;
-      },
-    );
+    return;
   }
 
   async deleteLink(user: User, idLink: number) {

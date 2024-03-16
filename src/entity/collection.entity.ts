@@ -2,10 +2,13 @@ import {
   Column,
   Entity,
   Index,
+  JoinColumn,
   ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Dashboard } from './dashboard.entity';
+import { ScreenCollection } from './screens.entity';
 
 @Entity({ name: 'collection' })
 export class Collection {
@@ -42,4 +45,14 @@ export class Collection {
     onDelete: 'CASCADE',
   })
   dashbId: Dashboard;
+
+  @OneToOne(
+    () => ScreenCollection,
+    (screenCollection) => screenCollection.collection,
+    {
+      onDelete: 'SET NULL',
+    },
+  )
+  @JoinColumn()
+  imageBuffer: ScreenCollection;
 }

@@ -1,6 +1,9 @@
 import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Organization } from '../../entity/organization.entity';
+import {
+  CollectionScreen,
+  Organization,
+} from '../../entity/organization.entity';
 import { User } from '../../entity/user.entity';
 import { ProtectAuthMiddleware } from '../../middlewares/protect-auth.middleware';
 import { Dashboard } from '../../entity/dashboard.entity';
@@ -10,10 +13,18 @@ import { CollectionController } from './collection.controller';
 import { Collection } from '../../entity/collection.entity';
 import { CheckUserMiddleware } from '../../middlewares/check-user.middleware';
 import { ImageService } from '../../services/image.service';
+import { ScreenCollection } from '../../entity/screens.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Organization, User, Dashboard, Collection]),
+    TypeOrmModule.forFeature([
+      Organization,
+      User,
+      Dashboard,
+      Collection,
+      ScreenCollection,
+      CollectionScreen,
+    ]),
   ],
   controllers: [CollectionController],
   providers: [CollectionService, AuthMiddlewareService, ImageService],

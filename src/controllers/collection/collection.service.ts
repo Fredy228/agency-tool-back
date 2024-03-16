@@ -7,6 +7,8 @@ import { CollectionDto } from './collection.dto';
 import { User } from '../../entity/user.entity';
 import { CustomException } from '../../services/custom-exception';
 import { decryptionData } from '../../services/encryption-data';
+import { ScreenCollection } from '../../entity/screens.entity';
+import { CollectionScreen } from '../../entity/organization.entity';
 
 @Injectable()
 export class CollectionService {
@@ -15,6 +17,10 @@ export class CollectionService {
     private dashboardRepository: Repository<Dashboard>,
     @InjectRepository(Collection)
     private collectionRepository: Repository<Collection>,
+    @InjectRepository(ScreenCollection)
+    private screenCollectionRepository: Repository<ScreenCollection>,
+    @InjectRepository(CollectionScreen)
+    private collectionScreenRepository: Repository<CollectionScreen>,
     private readonly entityManager: EntityManager,
   ) {}
 
@@ -49,15 +55,42 @@ export class CollectionService {
         `Your Collections limit is 3.`,
       );
 
-    const newCollection = this.collectionRepository.create({
-      name,
-      image: imageUrl,
-      dashbId: foundDashboard,
+    let customScreen = null;
+
+    if (Number(imageUrl)) {
+      customScreen = await this.collectionScreenRepository.findOneBy({
+        id: Number(imageUrl),
+      });
+
+      if (!customScreen)
+        throw new CustomException(
+          HttpStatus.NOT_FOUND,
+          `Selected screen not found`,
+        );
+    }
+
+    return this.entityManager.transaction(async () => {
+      const newCollection = this.collectionRepository.create({
+        name,
+        image: imageUrl,
+        dashbId: foundDashboard,
+      });
+
+      await this.collectionRepository.save(newCollection);
+
+      if (customScreen) {
+        const newScreen = this.screenCollectionRepository.create({
+          screen: customScreen,
+          collection: newCollection,
+        });
+
+        await this.screenCollectionRepository.save(newScreen);
+      }
+
+      console.log('customScreen', customScreen);
+
+      return { ...newCollection, imageBuffer: { screen: customScreen } };
     });
-
-    await this.collectionRepository.save(newCollection);
-
-    return newCollection;
   }
 
   async getCollectionById(
@@ -111,7 +144,11 @@ export class CollectionService {
     return foundCollection;
   }
 
-  async updateCollection(user: User, id: number, body: Partial<CollectionDto>) {
+  async updateCollection(
+    user: User,
+    id: number,
+    { imageUrl, name }: Partial<CollectionDto>,
+  ) {
     const foundCollection = await this.collectionRepository.findOneBy({
       id,
       dashbId: {
@@ -121,30 +158,80 @@ export class CollectionService {
       },
     });
 
+    const image = imageUrl;
+
     if (!foundCollection)
       throw new CustomException(HttpStatus.NOT_FOUND, `Collection not found`);
 
-    return this.entityManager.transaction(
-      async (transactionalEntityManager) => {
-        await transactionalEntityManager
-          .getRepository(Collection)
-          .createQueryBuilder()
-          .update(Collection)
-          .set({ ...body })
-          .where('id = :id', { id: foundCollection.id })
-          .execute();
+    return this.entityManager.transaction(async () => {
+      let customScreen = null;
+      let screenCollection: ScreenCollection = null;
 
-        return;
-      },
-    );
+      await this.collectionRepository.update(foundCollection, {
+        name,
+        image,
+      });
+
+      if (Number(image)) {
+        customScreen = await this.collectionScreenRepository.findOne({
+          where: {
+            id: Number(image),
+          },
+        });
+
+        if (!customScreen)
+          throw new CustomException(
+            HttpStatus.NOT_FOUND,
+            `Selected screen not found`,
+          );
+
+        if (Number(foundCollection.image)) {
+          screenCollection = await this.screenCollectionRepository.findOneBy({
+            collection: foundCollection,
+          });
+
+          if (!screenCollection) {
+            const newScreen = this.screenCollectionRepository.create({
+              screen: customScreen,
+              collection: foundCollection,
+            });
+
+            await this.screenCollectionRepository.save(newScreen);
+          } else {
+            await this.screenCollectionRepository.update(screenCollection, {
+              screen: customScreen,
+            });
+          }
+        } else {
+          const newScreen = this.screenCollectionRepository.create({
+            screen: customScreen,
+            collection: foundCollection,
+          });
+
+          await this.screenCollectionRepository.save(newScreen);
+        }
+      }
+
+      return customScreen;
+    });
   }
 
   async deleteCollection(user: User, id: number): Promise<void> {
-    const foundCollection = await this.collectionRepository.findOneBy({
-      id,
-      dashbId: {
-        orgId: {
-          userId: user,
+    const foundCollection = await this.collectionRepository.findOne({
+      where: {
+        id,
+        dashbId: {
+          orgId: {
+            userId: user,
+          },
+        },
+      },
+      relations: {
+        imageBuffer: true,
+      },
+      select: {
+        imageBuffer: {
+          id: true,
         },
       },
     });
@@ -152,8 +239,16 @@ export class CollectionService {
     if (!foundCollection)
       throw new CustomException(HttpStatus.NOT_FOUND, `Collection not found`);
 
-    await this.collectionRepository.delete(foundCollection);
+    return this.entityManager.transaction(async () => {
+      await this.collectionRepository.delete(foundCollection.id);
 
-    return;
+      if (foundCollection.imageBuffer) {
+        await this.screenCollectionRepository.delete(
+          foundCollection.imageBuffer.id,
+        );
+      }
+
+      return;
+    });
   }
 }

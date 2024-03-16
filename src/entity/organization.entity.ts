@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { User } from './user.entity';
 import { Dashboard } from './dashboard.entity';
-import { ScreenDashboard } from './screens.entity';
+import { ScreenCollection, ScreenDashboard } from './screens.entity';
 
 @Entity({ name: 'organization' })
 export class Organization {
@@ -86,8 +86,17 @@ export class CollectionScreen {
   @Column({ type: 'longblob', nullable: false })
   buffer: Buffer;
 
-  @ManyToOne(() => Organization, (org) => org.customScreens, {
+  @ManyToOne(() => Organization, (org) => org.collectionScreens, {
     onDelete: 'CASCADE',
   })
   orgId: Organization;
+
+  @OneToMany(
+    () => ScreenCollection,
+    (screenCollection) => screenCollection.screen,
+    {
+      onDelete: 'NO ACTION',
+    },
+  )
+  screensCollect: ScreenCollection[];
 }

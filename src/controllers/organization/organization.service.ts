@@ -89,19 +89,12 @@ export class OrganizationService {
       });
     }
 
-    return this.entityManager.transaction(
-      async (transactionalEntityManager) => {
-        const updater = transactionalEntityManager
-          .getRepository(Organization)
-          .createQueryBuilder()
-          .update(Organization)
-          .where('id = :id', { id: foundOrg.id });
+    await this.organizationRepository.update(foundOrg, {
+      name,
+      logoUrl: image,
+    });
 
-        updater.set({ name, logoUrl: image });
-
-        return await updater.execute();
-      },
-    );
+    return;
   }
 
   async deleteLogoOrg(user: User) {
@@ -115,18 +108,8 @@ export class OrganizationService {
         `The organization was not found`,
       );
 
-    return this.entityManager.transaction(
-      async (transactionalEntityManager) => {
-        const updater = transactionalEntityManager
-          .getRepository(Organization)
-          .createQueryBuilder()
-          .update(Organization)
-          .where('id = :id', { id: foundOrg.id });
+    await this.organizationRepository.update(foundOrg, { logoUrl: null });
 
-        updater.set({ logoUrl: null });
-
-        return await updater.execute();
-      },
-    );
+    return;
   }
 }

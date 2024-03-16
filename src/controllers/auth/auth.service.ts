@@ -34,7 +34,9 @@ export class AuthService {
   }: LoginAuthDto & { userAgent: Details }): Promise<User & TokenType> {
     const user = await this.usersRepository.findOne({
       where: { email },
-      relations: ['devices'],
+      relations: {
+        devices: true,
+      },
     });
 
     if (!user)
@@ -103,7 +105,9 @@ export class AuthService {
   ): Promise<User & TokenType> {
     const currentUser = await this.usersRepository.findOne({
       where: { email: user.email },
-      relations: ['devices'],
+      relations: {
+        devices: true,
+      },
     });
 
     const deviceModel = `${userAgent.platform} ${userAgent.os} ${userAgent.browser}`;
@@ -140,37 +144,19 @@ export class AuthService {
     user: User,
     currentDevice: UserDevices,
   ): Promise<TokenType> {
-    return this.entityManager.transaction(
-      async (transactionalEntityManager) => {
-        const newTokens = this.createToken(user);
+    const newTokens = this.createToken(user);
 
-        await transactionalEntityManager
-          .getRepository(UserDevices)
-          .createQueryBuilder()
-          .update(UserDevices)
-          .set({
-            accessToken: newTokens.accessToken,
-            refreshToken: newTokens.refreshToken,
-          })
-          .where('id = :id', { id: currentDevice.id })
-          .execute();
+    await this.devicesRepository.update(currentDevice, {
+      accessToken: newTokens.accessToken,
+      refreshToken: newTokens.refreshToken,
+    });
 
-        return newTokens;
-      },
-    );
+    return newTokens;
   }
 
   async logout(currentDevice: UserDevices): Promise<void> {
-    return this.entityManager.transaction(
-      async (transactionalEntityManager) => {
-        await transactionalEntityManager
-          .getRepository(UserDevices)
-          .createQueryBuilder()
-          .delete()
-          .where('id = :id', { id: currentDevice.id })
-          .execute();
-      },
-    );
+    await this.devicesRepository.delete(currentDevice);
+    return;
   }
 
   async deleteOldSession(devices: UserDevices[]) {
@@ -183,17 +169,7 @@ export class AuthService {
 
         if (currExp > currTime) return null;
 
-        return this.entityManager.transaction(
-          async (transactionalEntityManager) => {
-            await transactionalEntityManager
-              .getRepository(UserDevices)
-              .createQueryBuilder()
-              .delete()
-              .from(UserDevices)
-              .where('id = :id', { id: device.id })
-              .execute();
-          },
-        );
+        return await this.devicesRepository.delete(device);
       }),
     );
   }

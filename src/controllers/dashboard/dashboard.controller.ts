@@ -50,7 +50,7 @@ export class DashboardController {
     return this.dashboardService.createDashboard(
       req.user,
       body,
-      files?.logoPartner[0],
+      files?.logoPartner ? files?.logoPartner[0] : null,
     );
   }
 

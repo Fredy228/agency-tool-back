@@ -16,7 +16,10 @@ import { BodyValidationPipe } from '../../pipe/validator-body.pipe';
 import { Request } from 'express';
 import { User } from '../../entity/user.entity';
 import { CollectionDto } from './collection.dto';
-import { collectionCreateSchema } from '../../joi-schema/collectionSchema';
+import {
+  collectionCreateSchema,
+  collectionUpdateSchema,
+} from '../../joi-schema/collectionSchema';
 
 @Controller('api/collection')
 export class CollectionController {
@@ -38,7 +41,8 @@ export class CollectionController {
   }
 
   @Patch('/:idCollection')
-  @HttpCode(204)
+  @HttpCode(200)
+  @UsePipes(new BodyValidationPipe(collectionUpdateSchema))
   async update(
     @Param('idCollection') idCollection: string,
     @Req() req: Request & { user: User },

@@ -5,8 +5,9 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { CustomScreen } from './organization.entity';
+import { CollectionScreen, CustomScreen } from './organization.entity';
 import { Dashboard } from './dashboard.entity';
+import { Collection } from './collection.entity';
 
 @Entity({ name: 'screen_dashboard' })
 export class ScreenDashboard {
@@ -23,4 +24,21 @@ export class ScreenDashboard {
     onDelete: 'CASCADE',
   })
   dashboard: Dashboard;
+}
+
+@Entity({ name: 'screen_collection' })
+export class ScreenCollection {
+  @Index('idx_collect_screen_id')
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @ManyToOne(() => CollectionScreen, (screen) => screen.screensCollect, {
+    onDelete: 'CASCADE',
+  })
+  screen: CollectionScreen;
+
+  @OneToOne(() => Collection, (collection) => collection.imageBuffer, {
+    onDelete: 'CASCADE',
+  })
+  collection: Collection;
 }

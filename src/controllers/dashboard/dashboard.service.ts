@@ -95,7 +95,12 @@ export class DashboardService {
 
         await this.screenDashbRepository.save(newScreen);
 
-        newDashb.screenBuffer.screen = customScreen;
+        console.log('customScreen', customScreen);
+
+        newDashb.screenBuffer = {
+          ...newDashb.screenBuffer,
+          screen: customScreen,
+        };
       }
 
       newDashb.password = undefined;
@@ -151,7 +156,11 @@ export class DashboardService {
           userId: true,
         },
         links: true,
-        collections: true,
+        collections: {
+          imageBuffer: {
+            screen: true,
+          },
+        },
         screenBuffer: {
           screen: true,
         },
@@ -161,6 +170,13 @@ export class DashboardService {
           id: true,
           image: true,
           name: true,
+          imageBuffer: {
+            id: true,
+            screen: {
+              id: true,
+              buffer: true,
+            },
+          },
         },
         links: {
           id: true,
@@ -225,12 +241,27 @@ export class DashboardService {
           userId: user,
         },
       },
+      relations: {
+        screenBuffer: true,
+      },
+      select: {
+        screenBuffer: {
+          id: true,
+        },
+      },
     });
 
     if (!foundDashboard)
       throw new CustomException(HttpStatus.NOT_FOUND, `Not found dashboard`);
 
-    return await this.dashboardRepository.delete(foundDashboard.id);
+    return this.entityManager.transaction(async () => {
+      if (foundDashboard.screenBuffer) {
+        await this.screenDashbRepository.delete(foundDashboard.screenBuffer.id);
+      }
+      await this.dashboardRepository.delete(foundDashboard.id);
+
+      return;
+    });
   }
 
   async updateDashboard(
@@ -250,84 +281,76 @@ export class DashboardService {
 
     console.log('body', body);
 
-    return this.entityManager.transaction(
-      async (transactionalEntityManager) => {
-        let customScreen = null;
-        let screenDashboard: ScreenDashboard = null;
+    return this.entityManager.transaction(async () => {
+      let customScreen = null;
+      let screenDashboard: ScreenDashboard = null;
 
-        if (Number(body.screenUrl)) {
-          customScreen = await this.customScreenRepository.findOne({
-            where: {
-              id: Number(body.screenUrl),
-            },
+      if (Number(body.screenUrl)) {
+        customScreen = await this.customScreenRepository.findOne({
+          where: {
+            id: Number(body.screenUrl),
+          },
+        });
+
+        if (!customScreen)
+          throw new CustomException(
+            HttpStatus.NOT_FOUND,
+            `Selected screen not found`,
+          );
+
+        if (Number(foundDashboard.screenUrl)) {
+          screenDashboard = await this.screenDashbRepository.findOneBy({
+            dashboard: foundDashboard,
           });
 
-          if (!customScreen)
-            throw new CustomException(
-              HttpStatus.NOT_FOUND,
-              `Selected screen not found`,
-            );
-
-          if (Number(foundDashboard.screenUrl)) {
-            screenDashboard = await this.screenDashbRepository.findOneBy({
-              dashboard: foundDashboard,
-            });
-
-            if (!screenDashboard) {
-              const newScreen = this.screenDashbRepository.create({
-                screen: customScreen,
-                dashboard: foundDashboard,
-              });
-
-              await this.screenDashbRepository.save(newScreen);
-            } else {
-              await this.screenDashbRepository.update(screenDashboard, {
-                screen: customScreen,
-              });
-            }
-          } else {
+          if (!screenDashboard) {
             const newScreen = this.screenDashbRepository.create({
               screen: customScreen,
               dashboard: foundDashboard,
             });
 
             await this.screenDashbRepository.save(newScreen);
+          } else {
+            await this.screenDashbRepository.update(screenDashboard, {
+              screen: customScreen,
+            });
           }
-        }
-
-        let image = undefined;
-
-        if (logoImg) {
-          image = await this.imageService.optimize(logoImg, {
-            width: 460,
-            height: 80,
-            fit: 'inside',
+        } else {
+          const newScreen = this.screenDashbRepository.create({
+            screen: customScreen,
+            dashboard: foundDashboard,
           });
+
+          await this.screenDashbRepository.save(newScreen);
         }
+      }
 
-        let encrypt = undefined;
+      let image = undefined;
 
-        if (body.password) encrypt = encryptionData(body.password);
+      if (logoImg) {
+        image = await this.imageService.optimize(logoImg, {
+          width: 460,
+          height: 80,
+          fit: 'inside',
+        });
+      }
 
-        await transactionalEntityManager
-          .getRepository(Dashboard)
-          .createQueryBuilder()
-          .update(Dashboard)
-          .set({
-            textOne: body?.textOne,
-            textTwo: body?.textTwo,
-            textThree: body?.textThree,
-            screenUrl: body?.screenUrl,
-            name: body?.name,
-            password: encrypt,
-            logoPartnerUrl: image,
-          })
-          .where('id = :id', { id: foundDashboard.id })
-          .execute();
+      let encrypt = undefined;
 
-        return;
-      },
-    );
+      if (body.password) encrypt = encryptionData(body.password);
+
+      await this.dashboardRepository.update(foundDashboard, {
+        textOne: body?.textOne,
+        textTwo: body?.textTwo,
+        textThree: body?.textThree,
+        screenUrl: body?.screenUrl,
+        name: body?.name,
+        password: encrypt,
+        logoPartnerUrl: image,
+      });
+
+      return;
+    });
   }
 
   async deleteLogoPartner(user: User, idDash: number) {
@@ -346,20 +369,10 @@ export class DashboardService {
     if (!foundDashboard)
       throw new CustomException(HttpStatus.NOT_FOUND, `Not found dashboard`);
 
-    return this.entityManager.transaction(
-      async (transactionalEntityManager) => {
-        await transactionalEntityManager
-          .getRepository(Dashboard)
-          .createQueryBuilder()
-          .update(Dashboard)
-          .set({
-            logoPartnerUrl: null,
-          })
-          .where('id = :id', { id: foundDashboard.id })
-          .execute();
+    await this.dashboardRepository.update(foundDashboard, {
+      logoPartnerUrl: null,
+    });
 
-        return;
-      },
-    );
+    return;
   }
 }
