@@ -1,7 +1,6 @@
 import {
   Column,
   Entity,
-  Index,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -15,11 +14,9 @@ import { UserSettingsType } from '../types/user-types';
 @Entity({ name: 'user' })
 @Unique(['email'])
 export class User {
-  @Index('idx_user_id')
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Index('idx_user_email')
   @Column({ type: 'varchar', length: 100, nullable: false })
   email: string;
 
@@ -77,7 +74,6 @@ export class User {
 
 @Entity({ name: 'user_devices' })
 export class UserDevices {
-  @Index('idx_devices_id')
   @PrimaryGeneratedColumn()
   id: number;
 

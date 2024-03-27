@@ -14,6 +14,7 @@ import { Collection } from '../../entity/collection.entity';
 import { CheckUserMiddleware } from '../../middlewares/check-user.middleware';
 import { ImageService } from '../../services/image.service';
 import { ScreenCollection } from '../../entity/screens.entity';
+import { SectionModule } from './section/section.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { ScreenCollection } from '../../entity/screens.entity';
       ScreenCollection,
       CollectionScreen,
     ]),
+    SectionModule,
   ],
   controllers: [CollectionController],
   providers: [CollectionService, AuthMiddlewareService, ImageService],

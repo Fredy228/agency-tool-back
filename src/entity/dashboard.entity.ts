@@ -1,21 +1,19 @@
 import {
   Column,
   Entity,
-  Index,
   JoinColumn,
   ManyToOne,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { CustomScreen, Organization } from './organization.entity';
+import { Organization } from './organization.entity';
 import { Link } from './link.entity';
 import { Collection } from './collection.entity';
 import { ScreenDashboard } from './screens.entity';
 
 @Entity({ name: 'dashboard' })
 export class Dashboard {
-  @Index('idx_dashboard_id')
   @PrimaryGeneratedColumn()
   id: number;
 

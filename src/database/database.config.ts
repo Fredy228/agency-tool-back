@@ -10,7 +10,12 @@ import {
 } from '../entity/organization.entity';
 import { Dashboard } from '../entity/dashboard.entity';
 import { Link } from '../entity/link.entity';
-import { Collection } from '../entity/collection.entity';
+import {
+  Collection,
+  CollectionDetails,
+  CollectionFolder,
+  CollectionSection,
+} from '../entity/collection.entity';
 import { ScreenCollection, ScreenDashboard } from '../entity/screens.entity';
 
 dotenv.config();
@@ -33,6 +38,9 @@ const config: TypeOrmModuleOptions = {
     Collection,
     ScreenDashboard,
     ScreenCollection,
+    CollectionDetails,
+    CollectionSection,
+    CollectionFolder,
   ],
   synchronize: process.env.PRODUCTION !== 'true', // В режиме разработки можно устанавливать в true, но в продакшене лучше false
   logging: process.env.PRODUCTION !== 'true',

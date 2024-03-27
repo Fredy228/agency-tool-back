@@ -28,7 +28,6 @@ export class ScreenDashboard {
 
 @Entity({ name: 'screen_collection' })
 export class ScreenCollection {
-  @Index('idx_collect_screen_id')
   @PrimaryGeneratedColumn()
   id: number;
 

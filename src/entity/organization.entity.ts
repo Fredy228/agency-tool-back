@@ -1,7 +1,6 @@
 import {
   Column,
   Entity,
-  Index,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -12,7 +11,6 @@ import { ScreenCollection, ScreenDashboard } from './screens.entity';
 
 @Entity({ name: 'organization' })
 export class Organization {
-  @Index('idx_organization_id')
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -59,7 +57,6 @@ export class Organization {
 
 @Entity({ name: 'custom_screen' })
 export class CustomScreen {
-  @Index('idx_custom_screen_id')
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -79,7 +76,6 @@ export class CustomScreen {
 
 @Entity({ name: 'collection_screen' })
 export class CollectionScreen {
-  @Index('idx_collection_screen_id')
   @PrimaryGeneratedColumn()
   id: number;
 

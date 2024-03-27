@@ -1,15 +1,8 @@
-import {
-  Column,
-  Entity,
-  Index,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Dashboard } from './dashboard.entity';
 
 @Entity({ name: 'link' })
 export class Link {
-  @Index('idx_link_id')
   @PrimaryGeneratedColumn()
   id: number;
 

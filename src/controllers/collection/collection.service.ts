@@ -2,7 +2,7 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Dashboard } from '../../entity/dashboard.entity';
 import { EntityManager, Repository } from 'typeorm';
-import { Collection } from '../../entity/collection.entity';
+import { Collection, CollectionDetails } from '../../entity/collection.entity';
 import { CollectionDto } from './collection.dto';
 import { User } from '../../entity/user.entity';
 import { CustomException } from '../../services/custom-exception';
@@ -17,6 +17,8 @@ export class CollectionService {
     private dashboardRepository: Repository<Dashboard>,
     @InjectRepository(Collection)
     private collectionRepository: Repository<Collection>,
+    @InjectRepository(CollectionDetails)
+    private detailsRepository: Repository<CollectionDetails>,
     @InjectRepository(ScreenCollection)
     private screenCollectionRepository: Repository<ScreenCollection>,
     @InjectRepository(CollectionScreen)
@@ -44,15 +46,13 @@ export class CollectionService {
       },
     });
 
-    console.log('foundDashboard', foundDashboard);
-
     if (!foundDashboard)
       throw new CustomException(HttpStatus.NOT_FOUND, `Dashboard not found`);
 
     if (foundDashboard.collections.length >= 3)
       throw new CustomException(
         HttpStatus.BAD_REQUEST,
-        `Your Collections limit is 3.`,
+        `Your Collections limit is 3`,
       );
 
     let customScreen = null;
@@ -87,7 +87,11 @@ export class CollectionService {
         await this.screenCollectionRepository.save(newScreen);
       }
 
-      console.log('customScreen', customScreen);
+      const newDetails = this.detailsRepository.create({
+        collection: newCollection,
+      });
+
+      await this.detailsRepository.save(newDetails);
 
       return { ...newCollection, imageBuffer: { screen: customScreen } };
     });
@@ -103,6 +107,11 @@ export class CollectionService {
         dashbId: {
           orgId: {
             userId: true,
+          },
+        },
+        details: {
+          sections: {
+            folders: true,
           },
         },
       },
