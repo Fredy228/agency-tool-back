@@ -21,9 +21,39 @@ import {
   collectionUpdateSchema,
 } from '../../joi-schema/collectionSchema';
 
+import { load } from 'cheerio';
+import axios from 'axios';
+
 @Controller('api/collection')
 export class CollectionController {
   constructor(private readonly collectionService: CollectionService) {}
+
+  @Post('/cheerio')
+  @HttpCode(200)
+  async cheerio(@Body() body: { url: string }) {
+    const { data } = await axios.get(body.url);
+    const $ = load(data);
+    const getMetaTag = (name) => {
+      return (
+        $(`meta[name=${name}]`).attr('content') ||
+        $(`meta[propety="twitter${name}"]`).attr('content') ||
+        $(`meta[property="og:${name}"]`).attr('content')
+      );
+    };
+    const preview = {
+      url: body.url,
+      title: $('title').first().text(),
+      favicon:
+        $('link[rel="shortcut icon"]').attr('href') ||
+        $('link[rel="alternate icon"]').attr('href'),
+      description: getMetaTag('description'),
+      image: getMetaTag('image'),
+      author: getMetaTag('author'),
+    };
+
+    console.log(preview);
+    return preview;
+  }
 
   @Post('/:idDashboard')
   @HttpCode(201)

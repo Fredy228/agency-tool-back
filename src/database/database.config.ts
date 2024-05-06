@@ -10,13 +10,12 @@ import {
 } from '../entity/organization.entity';
 import { Dashboard } from '../entity/dashboard.entity';
 import { Link } from '../entity/link.entity';
+import { Collection } from '../entity/collection.entity';
+import { ScreenCollection, ScreenDashboard } from '../entity/screens.entity';
 import {
-  Collection,
-  CollectionDetails,
   CollectionFolder,
   CollectionSection,
-} from '../entity/collection.entity';
-import { ScreenCollection, ScreenDashboard } from '../entity/screens.entity';
+} from '../entity/collection-details.entity';
 
 dotenv.config();
 
@@ -38,7 +37,6 @@ const config: TypeOrmModuleOptions = {
     Collection,
     ScreenDashboard,
     ScreenCollection,
-    CollectionDetails,
     CollectionSection,
     CollectionFolder,
   ],

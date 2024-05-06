@@ -2,7 +2,7 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Dashboard } from '../../entity/dashboard.entity';
 import { EntityManager, Repository } from 'typeorm';
-import { Collection, CollectionDetails } from '../../entity/collection.entity';
+import { Collection } from '../../entity/collection.entity';
 import { CollectionDto } from './collection.dto';
 import { User } from '../../entity/user.entity';
 import { CustomException } from '../../services/custom-exception';
@@ -17,8 +17,6 @@ export class CollectionService {
     private dashboardRepository: Repository<Dashboard>,
     @InjectRepository(Collection)
     private collectionRepository: Repository<Collection>,
-    @InjectRepository(CollectionDetails)
-    private detailsRepository: Repository<CollectionDetails>,
     @InjectRepository(ScreenCollection)
     private screenCollectionRepository: Repository<ScreenCollection>,
     @InjectRepository(CollectionScreen)
@@ -87,12 +85,6 @@ export class CollectionService {
         await this.screenCollectionRepository.save(newScreen);
       }
 
-      const newDetails = this.detailsRepository.create({
-        collection: newCollection,
-      });
-
-      await this.detailsRepository.save(newDetails);
-
       return { ...newCollection, imageBuffer: { screen: customScreen } };
     });
   }
@@ -109,10 +101,8 @@ export class CollectionService {
             userId: true,
           },
         },
-        details: {
-          sections: {
-            folders: true,
-          },
+        sections: {
+          folders: true,
         },
       },
       select: {
@@ -120,8 +110,11 @@ export class CollectionService {
           id: true,
           password: true,
           orgId: {
+            id: true,
+            name: true,
             userId: {
               id: true,
+              email: true,
             },
           },
         },
@@ -133,6 +126,9 @@ export class CollectionService {
 
     if (!foundCollection)
       throw new CustomException(HttpStatus.NOT_FOUND, `Collection not found`);
+
+    console.log('user-check', user);
+    console.log(foundCollection);
 
     if (user && foundCollection?.dashbId?.orgId?.userId?.id === user.id) {
       foundCollection.dashbId = undefined;

@@ -1,12 +1,12 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-  CollectionFolder,
-  CollectionSection,
-} from '../../../entity/collection.entity';
 import { Repository } from 'typeorm';
 import { User } from '../../../entity/user.entity';
 import { CustomException } from '../../../services/custom-exception';
+import {
+  CollectionFolder,
+  CollectionSection,
+} from '../../../entity/collection-details.entity';
 
 @Injectable()
 export class FolderService {
@@ -23,12 +23,10 @@ export class FolderService {
 
     const foundSection = await this.sectionRepository.findOneBy({
       id: idSection,
-      details: {
-        collection: {
-          dashbId: {
-            orgId: {
-              userId: user,
-            },
+      collection: {
+        dashbId: {
+          orgId: {
+            userId: user,
           },
         },
       },
@@ -55,12 +53,10 @@ export class FolderService {
     const foundFolder = await this.folderRepository.findOneBy({
       id: idFolder,
       section: {
-        details: {
-          collection: {
-            dashbId: {
-              orgId: {
-                userId: user,
-              },
+        collection: {
+          dashbId: {
+            orgId: {
+              userId: user,
             },
           },
         },
@@ -82,12 +78,10 @@ export class FolderService {
     const foundFolder = await this.folderRepository.findOneBy({
       id: idFolder,
       section: {
-        details: {
-          collection: {
-            dashbId: {
-              orgId: {
-                userId: user,
-              },
+        collection: {
+          dashbId: {
+            orgId: {
+              userId: user,
             },
           },
         },

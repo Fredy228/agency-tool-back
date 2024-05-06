@@ -7,10 +7,13 @@ import {
   Patch,
   Post,
   Req,
+  UsePipes,
 } from '@nestjs/common';
 import { SectionService } from './section.service';
 import { Request } from 'express';
 import { User } from '../../../entity/user.entity';
+import { BodyValidationPipe } from '../../../pipe/validator-body.pipe';
+import { sectionCreateSchema } from '../../../joi-schema/collectionSchema';
 
 @Controller('api/collection/section')
 export class SectionController {
@@ -18,6 +21,7 @@ export class SectionController {
 
   @Post('/:idCollection')
   @HttpCode(201)
+  @UsePipes(new BodyValidationPipe(sectionCreateSchema))
   async create(
     @Param('idCollection') idCollection: string,
     @Req() req: Request & { user: User },
@@ -28,6 +32,7 @@ export class SectionController {
 
   @Patch('/:idSection')
   @HttpCode(204)
+  @UsePipes(new BodyValidationPipe(sectionCreateSchema))
   async update(
     @Param('idSection') idSection: string,
     @Req() req: Request & { user: User },

@@ -12,8 +12,8 @@ import { Request } from 'express';
 import { User } from '../../../entity/user.entity';
 import { FolderService } from './folder.service';
 
-@Controller('api/collection/section')
-export class SectionController {
+@Controller('api/collection/folder')
+export class FolderController {
   constructor(private readonly serviceFolder: FolderService) {}
 
   @Post('/:idSection')

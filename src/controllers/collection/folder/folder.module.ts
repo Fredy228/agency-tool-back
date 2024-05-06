@@ -1,19 +1,20 @@
 import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../../../entity/user.entity';
-import {
-  CollectionFolder,
-  CollectionSection,
-} from '../../../entity/collection.entity';
 import { AuthMiddlewareService } from '../../../services/auth-middleware.service';
 import { ProtectAuthMiddleware } from '../../../middlewares/protect-auth.middleware';
 import { FolderService } from './folder.service';
+import {
+  CollectionFolder,
+  CollectionSection,
+} from '../../../entity/collection-details.entity';
+import { FolderController } from './folder.controller';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, CollectionSection, CollectionFolder]),
   ],
-  controllers: [],
+  controllers: [FolderController],
   providers: [FolderService, AuthMiddlewareService],
 })
 export class FolderModule {

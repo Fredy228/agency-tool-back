@@ -1,15 +1,13 @@
 import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../../../entity/user.entity';
-import {
-  Collection,
-  CollectionSection,
-} from '../../../entity/collection.entity';
+import { Collection } from '../../../entity/collection.entity';
 import { ProtectAuthMiddleware } from '../../../middlewares/protect-auth.middleware';
 import { SectionController } from './section.controller';
 import { AuthMiddlewareService } from '../../../services/auth-middleware.service';
 import { SectionService } from './section.service';
 import { FolderModule } from '../folder/folder.module';
+import { CollectionSection } from '../../../entity/collection-details.entity';
 
 @Module({
   imports: [

@@ -1,12 +1,10 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-  Collection,
-  CollectionSection,
-} from '../../../entity/collection.entity';
+import { Collection } from '../../../entity/collection.entity';
 import { Repository } from 'typeorm';
 import { CustomException } from '../../../services/custom-exception';
 import { User } from '../../../entity/user.entity';
+import { CollectionSection } from '../../../entity/collection-details.entity';
 
 @Injectable()
 export class SectionService {
@@ -30,19 +28,13 @@ export class SectionService {
           },
         },
       },
-      relations: {
-        details: true,
-      },
     });
 
-    if (!foundCollection || !foundCollection.details)
-      throw new CustomException(
-        HttpStatus.NOT_FOUND,
-        `Not found collection or details`,
-      );
+    if (!foundCollection)
+      throw new CustomException(HttpStatus.NOT_FOUND, `Not found collection`);
 
     const newSection = this.sectionRepository.create({
-      details: foundCollection.details,
+      collection: foundCollection,
       name,
     });
 
@@ -58,12 +50,10 @@ export class SectionService {
 
     const foundSection = await this.sectionRepository.findOneBy({
       id: idSection,
-      details: {
-        collection: {
-          dashbId: {
-            orgId: {
-              userId: user,
-            },
+      collection: {
+        dashbId: {
+          orgId: {
+            userId: user,
           },
         },
       },
@@ -85,12 +75,10 @@ export class SectionService {
 
     const foundSection = await this.sectionRepository.findOneBy({
       id: idSection,
-      details: {
-        collection: {
-          dashbId: {
-            orgId: {
-              userId: user,
-            },
+      collection: {
+        dashbId: {
+          orgId: {
+            userId: user,
           },
         },
       },
