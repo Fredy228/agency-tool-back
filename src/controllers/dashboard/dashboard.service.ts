@@ -77,25 +77,23 @@ export class DashboardService {
     if (!encrypt)
       throw new CustomException(HttpStatus.BAD_REQUEST, `Error encrypt pass`);
 
-    return this.entityManager.transaction(async () => {
-      const newDashb = this.dashboardRepository.create({
+    return this.entityManager.transaction(async (transaction) => {
+      const newDashb = transaction.create(Dashboard, {
         ...body,
         password: encrypt,
         orgId: foundOrg,
         logoPartnerUrl: image,
       });
 
-      await this.dashboardRepository.save(newDashb);
+      await transaction.save(newDashb);
 
       if (customScreen) {
-        const newScreen = this.screenDashbRepository.create({
+        const newScreen = transaction.create(ScreenDashboard, {
           screen: customScreen,
           dashboard: newDashb,
         });
 
-        await this.screenDashbRepository.save(newScreen);
-
-        console.log('customScreen', customScreen);
+        await transaction.save(newScreen);
 
         newDashb.screenBuffer = {
           ...newDashb.screenBuffer,
@@ -254,11 +252,14 @@ export class DashboardService {
     if (!foundDashboard)
       throw new CustomException(HttpStatus.NOT_FOUND, `Not found dashboard`);
 
-    return this.entityManager.transaction(async () => {
+    return this.entityManager.transaction(async (transaction) => {
       if (foundDashboard.screenBuffer) {
-        await this.screenDashbRepository.delete(foundDashboard.screenBuffer.id);
+        await transaction.delete(
+          ScreenDashboard,
+          foundDashboard.screenBuffer.id,
+        );
       }
-      await this.dashboardRepository.delete(foundDashboard.id);
+      await transaction.delete(Dashboard, foundDashboard.id);
 
       return;
     });
@@ -281,12 +282,12 @@ export class DashboardService {
 
     console.log('body', body);
 
-    return this.entityManager.transaction(async () => {
+    return this.entityManager.transaction(async (transaction) => {
       let customScreen = null;
       let screenDashboard: ScreenDashboard = null;
 
       if (Number(body.screenUrl)) {
-        customScreen = await this.customScreenRepository.findOne({
+        customScreen = await transaction.findOne(CustomScreen, {
           where: {
             id: Number(body.screenUrl),
           },
@@ -299,29 +300,29 @@ export class DashboardService {
           );
 
         if (Number(foundDashboard.screenUrl)) {
-          screenDashboard = await this.screenDashbRepository.findOneBy({
+          screenDashboard = await transaction.findOneBy(ScreenDashboard, {
             dashboard: foundDashboard,
           });
 
           if (!screenDashboard) {
-            const newScreen = this.screenDashbRepository.create({
+            const newScreen = transaction.create(ScreenDashboard, {
               screen: customScreen,
               dashboard: foundDashboard,
             });
 
-            await this.screenDashbRepository.save(newScreen);
+            await transaction.save(newScreen);
           } else {
-            await this.screenDashbRepository.update(screenDashboard, {
+            await transaction.update(ScreenDashboard, screenDashboard, {
               screen: customScreen,
             });
           }
         } else {
-          const newScreen = this.screenDashbRepository.create({
+          const newScreen = transaction.create(ScreenDashboard, {
             screen: customScreen,
             dashboard: foundDashboard,
           });
 
-          await this.screenDashbRepository.save(newScreen);
+          await transaction.save(newScreen);
         }
       }
 

@@ -67,8 +67,8 @@ export class CollectionService {
         );
     }
 
-    return this.entityManager.transaction(async () => {
-      const newCollection = this.collectionRepository.create({
+    return this.entityManager.transaction(async (transaction) => {
+      const newCollection = transaction.create(Collection, {
         name,
         image: imageUrl,
         dashbId: foundDashboard,
@@ -77,12 +77,12 @@ export class CollectionService {
       await this.collectionRepository.save(newCollection);
 
       if (customScreen) {
-        const newScreen = this.screenCollectionRepository.create({
+        const newScreen = transaction.create(ScreenCollection, {
           screen: customScreen,
           collection: newCollection,
         });
 
-        await this.screenCollectionRepository.save(newScreen);
+        await transaction.save(newScreen);
       }
 
       return { ...newCollection, imageBuffer: { screen: customScreen } };
@@ -168,11 +168,11 @@ export class CollectionService {
     if (!foundCollection)
       throw new CustomException(HttpStatus.NOT_FOUND, `Collection not found`);
 
-    return this.entityManager.transaction(async () => {
+    return this.entityManager.transaction(async (transaction) => {
       let customScreen = null;
       let screenCollection: ScreenCollection = null;
 
-      await this.collectionRepository.update(foundCollection, {
+      await transaction.update(Collection, foundCollection, {
         name,
         image,
       });
@@ -196,24 +196,24 @@ export class CollectionService {
           });
 
           if (!screenCollection) {
-            const newScreen = this.screenCollectionRepository.create({
+            const newScreen = transaction.create(ScreenCollection, {
               screen: customScreen,
               collection: foundCollection,
             });
 
-            await this.screenCollectionRepository.save(newScreen);
+            await transaction.save(newScreen);
           } else {
-            await this.screenCollectionRepository.update(screenCollection, {
+            await transaction.update(ScreenCollection, screenCollection, {
               screen: customScreen,
             });
           }
         } else {
-          const newScreen = this.screenCollectionRepository.create({
+          const newScreen = transaction.create(ScreenCollection, {
             screen: customScreen,
             collection: foundCollection,
           });
 
-          await this.screenCollectionRepository.save(newScreen);
+          await transaction.save(newScreen);
         }
       }
 
@@ -244,11 +244,12 @@ export class CollectionService {
     if (!foundCollection)
       throw new CustomException(HttpStatus.NOT_FOUND, `Collection not found`);
 
-    return this.entityManager.transaction(async () => {
-      await this.collectionRepository.delete(foundCollection.id);
+    return this.entityManager.transaction(async (transaction) => {
+      await transaction.delete(Collection, foundCollection.id);
 
       if (foundCollection.imageBuffer) {
-        await this.screenCollectionRepository.delete(
+        await transaction.delete(
+          ScreenCollection,
           foundCollection.imageBuffer.id,
         );
       }
