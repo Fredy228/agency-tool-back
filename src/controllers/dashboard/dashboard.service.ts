@@ -312,7 +312,7 @@ export class DashboardService {
 
             await transaction.save(newScreen);
           } else {
-            await transaction.update(ScreenDashboard, screenDashboard, {
+            await transaction.update(ScreenDashboard, screenDashboard.id, {
               screen: customScreen,
             });
           }
@@ -340,7 +340,7 @@ export class DashboardService {
 
       if (body.password) encrypt = encryptionData(body.password);
 
-      await this.dashboardRepository.update(foundDashboard, {
+      await transaction.update(Dashboard, foundDashboard.id, {
         textOne: body?.textOne,
         textTwo: body?.textTwo,
         textThree: body?.textThree,

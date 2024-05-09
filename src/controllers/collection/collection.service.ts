@@ -172,13 +172,13 @@ export class CollectionService {
       let customScreen = null;
       let screenCollection: ScreenCollection = null;
 
-      await transaction.update(Collection, foundCollection, {
+      await transaction.update(Collection, foundCollection.id, {
         name,
         image,
       });
 
       if (Number(image)) {
-        customScreen = await this.collectionScreenRepository.findOne({
+        customScreen = await transaction.findOne(CollectionScreen, {
           where: {
             id: Number(image),
           },
@@ -191,7 +191,7 @@ export class CollectionService {
           );
 
         if (Number(foundCollection.image)) {
-          screenCollection = await this.screenCollectionRepository.findOneBy({
+          screenCollection = await transaction.findOneBy(ScreenCollection, {
             collection: foundCollection,
           });
 
@@ -203,7 +203,7 @@ export class CollectionService {
 
             await transaction.save(newScreen);
           } else {
-            await transaction.update(ScreenCollection, screenCollection, {
+            await transaction.update(ScreenCollection, screenCollection.id, {
               screen: customScreen,
             });
           }
