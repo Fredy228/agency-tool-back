@@ -108,6 +108,16 @@ export class DashboardService {
   }
 
   async getDashboards(user: User): Promise<Dashboard[]> {
+    const organization = await this.organizationRepository.findOne({
+      where: { userId: user },
+    });
+
+    if (!organization)
+      throw new CustomException(
+        HttpStatus.NOT_FOUND,
+        `The organization was not found`,
+      );
+
     const dashboards = await this.dashboardRepository.find({
       where: {
         orgId: {
